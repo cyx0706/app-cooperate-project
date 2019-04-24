@@ -68,6 +68,15 @@ def email_api(request):
 
 def test_delete(request):
     if request.method == 'DELETE':
-        return JsonResponse({'status': True, 'msg': "你成功使用了delete请求!"})
+        name = request.DELETE.get('name', None)
+        if name:
+            return JsonResponse({'status': True,
+                                 'msg': "你成功使用了delete请求!",
+                                 'name': name,
+                                 'tips': "这里的name的值是你表单里的值"})
+        else:
+            return JsonResponse({'status': False,
+                                 'msg': "你貌似没传上值",
+                                 'tips': "确保你的表单字段里的key是name"})
     else:
         return JsonResponse({'status': False, 'msg': "请使用delete请求!"})

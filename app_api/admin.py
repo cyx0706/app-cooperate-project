@@ -11,7 +11,7 @@ admin.site.disable_action('delete_selected')
 
 class UserEXInfo(admin.StackedInline):
     model = UserDetailMsg
-    fk_name = 'user_msg'
+    fk_name = 'user'
 
 
 @admin.register(UserAll)
@@ -29,8 +29,13 @@ class UserAdmin(admin.ModelAdmin):
         row_updated = queryset.update(status=False)
         message_bit = "屏蔽了%s个用户" % row_updated
         self.message_user(request, message_bit)
-    block_user.short_description = "注销商家销售权"
+    block_user.short_description = "注销用户"
     actions = [block_user]
+
+    def save_model(self, request, obj, form, change):
+        obj.password = hashlib.sha1(obj.password.encode('utf-8')).hexdigest()
+        super().save_model(request, obj, form, change)
+
 
 
 @admin.register(Tags)

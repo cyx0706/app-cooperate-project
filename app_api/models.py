@@ -116,6 +116,7 @@ class PostFloor(models.Model):
     create_time = models.DateTimeField(u'发楼层时间', default=timezone.now)
     unfold_status = models.BooleanField(u'楼层展示状态', default=True)
     floor_number = models.PositiveIntegerField(u'楼层数')
+    read_status = models.BooleanField(u'楼主已读状态', default=False)
 
     class Meta():
         verbose_name = "楼"
@@ -221,28 +222,42 @@ class UserDetailMsg(models.Model):
         (1, "女"),
         (2, "保密")
     )
-    user_msg = models.OneToOneField('UserAll', verbose_name='用户id', related_name='user_msg')
-    birthday = models.DateField(u'生日', blank=True)
-    gender = models.CharField(u'性别', max_length=10, choices=GENDER_CHOICE, blank=True)
+    user = models.OneToOneField('UserAll', verbose_name='用户id', related_name='user_msg')
+    birthday = models.DateField(u'生日', blank=True, null=True)
+    gender = models.IntegerField(u'性别', choices=GENDER_CHOICE, blank=True, default=2)
     description = models.TextField(u'个人简介', blank=True)
+    background_pic = models.ImageField(u'个人中心背景', upload_to=photo_path, blank=True)
+
     watching = models.ManyToManyField(PostBars, verbose_name='关注的吧', through='UserWatching')
-    collections = models.ManyToManyField(Post, verbose_name='收藏的帖子')
+    collections = models.ManyToManyField(Post, verbose_name='收藏的帖子', related_name='user_collection')
     interest = models.ManyToManyField(Tags, verbose_name='兴趣')
     follow = models.ManyToManyField(UserAll, verbose_name='关注', through='UserFollow')
-    background_pic = models.ImageField(u'个人中心背景',upload_to=photo_path, blank=True)
+    praise = models.ManyToManyField(Post, verbose_name="点赞的帖子", blank=True, through='UserPraise', related_name='user_praise')
+
+
+class UserPraise(models.Model):
+    user = models.ForeignKey(UserDetailMsg, on_delete=models.CASCADE)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    time = models.DateTimeField(u'时间', default=timezone.now)
+    read_status = models.BooleanField(u'消息已读状态', default=False)
+    display_status = models.BooleanField(u'删除状态', default=False)
 
 
 class UserFollow(models.Model):
     user = models.ForeignKey(UserDetailMsg, on_delete=models.CASCADE)
     follower = models.ForeignKey(UserAll, on_delete=models.CASCADE)
+    time = models.DateTimeField(u'时间', default=timezone.now)
     mutual_following = models.BooleanField(u'互相关注状态',default=False)
     read_status = models.BooleanField(u'消息已读状态', default=False)
+    display_status = models.BooleanField(u'删除状态', default=False)
 
 
 class UserWatching(models.Model):
     user = models.ForeignKey(UserDetailMsg, on_delete=models.CASCADE)
     bar = models.ForeignKey(PostBars, on_delete=models.CASCADE)
+    time = models.DateTimeField(u'时间', default=timezone.now)
     read_status = models.BooleanField(u'消息已读状态', default=False)
+    display_status = models.BooleanField(u'删除状态', default=False)
 
 
 

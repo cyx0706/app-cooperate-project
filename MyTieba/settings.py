@@ -125,7 +125,7 @@ STATICFILES_DIRS = (
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/').replace('\\', '/')
 MEDIA_URL = '/media/'
 
-MAX_UPLOAD_SIZE = 5242880  # 50MB
+MAX_UPLOAD_SIZE = 3 * 1024 * 1024  # 3MB
 
 # email setting
 # EMAIL_BACKEND = 'django.core.mail.backend.smtp.EmailBackend'

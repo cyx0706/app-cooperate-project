@@ -126,7 +126,7 @@ class UserClassForProject(UserClass):
     def __init__(self, id=0, name=None):
         super().__init__(id, name)
 
-    def create_user(self, password, email, interest):
+    def create_user(self, password, email, interest, description, birthday):
         if self.check_pwd(password):
             user = UserAll(username=self.username, email=email,
                            password=hashlib.sha1(password.encode('utf-8')).hexdigest())
@@ -140,6 +140,10 @@ class UserClassForProject(UserClass):
                         user_msg.interest.add(Tags.objects.get(type=x))
                     else:
                         continue
+            if description:
+                user_msg.description = description
+            if birthday:
+                user_msg.birthday = birthday
             user_msg.save()
             return True
         else:
@@ -197,7 +201,6 @@ def email_api(request):
             code += str(random.randint(0, 9))
             time += 1
         body = "你的验证码是:{}".format(code)
-        print(body)
         request.session['code'] = code
         send_mail(subject=title, message=body, recipient_list=[email], from_email=settings.EMAIL_HOST_USER)
         return JsonResponse({'status': True, 'msg': "发送邮件成功"})
@@ -243,7 +246,13 @@ def register_api(request):
             username = request.POST.get('username')
             password = request.POST.get('password')
             interest = request.POST.getlist('interest')
+            birthday = request.POST.get('birthday')
+            description = request.POST.get('description')
             new_user = UserClassForProject(name=username)
+
+            if not re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
+                print(birthday)
+                return JsonResponse({'status': False, 'msg': "生日格式错误"})
 
             if UserAll.objects.filter(email=email):
                 return JsonResponse({'status': False, 'msg': "邮箱已经存在", 'error_code': 3})
@@ -251,11 +260,10 @@ def register_api(request):
             if not new_user.check_uniqueness_name():
                 return JsonResponse({'status': False, 'msg': "用户名已存在", 'error_code': 3})
 
-            if new_user.create_user(password, email, interest):
+            if new_user.create_user(password, email, interest, description, birthday):
                 return JsonResponse({'status': True, 'msg': "创建用户成功"})
             else:
                 return JsonResponse({'status': False, 'error_code': 3, 'msg': "密码不能为空"})
-
         else:
             return JsonResponse({'status': False, 'error_code': 1, 'msg': "无权限"})
 

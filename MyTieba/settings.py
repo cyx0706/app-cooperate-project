@@ -131,10 +131,10 @@ MAX_UPLOAD_SIZE = 3 * 1024 * 1024  # 3MB
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.163.com'
-EMAIL_PORT = 465
+EMAIL_PORT = 25
 EMAIL_HOST_USER = '18539075138@163.com'
 EMAIL_HOST_PASSWORD = '0706XXSR'
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 
 # logger
 BASE_LOG_DIR = os.path.join(BASE_DIR, "log")

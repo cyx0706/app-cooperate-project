@@ -136,6 +136,7 @@ EMAIL_HOST_USER = '18539075138@163.com'
 EMAIL_HOST_PASSWORD = '0706XXSR'
 
 
+
 # logger
 BASE_LOG_DIR = os.path.join(BASE_DIR, "log")
 # LOGGING = {

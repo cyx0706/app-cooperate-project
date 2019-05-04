@@ -136,6 +136,7 @@ EMAIL_HOST_USER = '18539075138@163.com'
 EMAIL_HOST_PASSWORD = '0706XXSR'
 EMAIL_SUBJECT_PREFIX = u'django'       #为邮件Subject-line前缀,默认是'[django]'
 EMAIL_USE_TLS = True                  #与SMTP服务器通信时，是否启动TLS链接(安全链接)。默认是false
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # logger
 BASE_LOG_DIR = os.path.join(BASE_DIR, "log")

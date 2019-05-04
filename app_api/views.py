@@ -11,10 +11,10 @@ import re
 import hashlib
 import random
 
+
 def test_delete(request):
     if request.method == 'DELETE':
         name = request.DELETE.get('name', None)
-        print(request.DELETE.getlist('k'))
         if name:
             return JsonResponse({'status': True,
                                  'msg': "你成功使用了delete请求!",

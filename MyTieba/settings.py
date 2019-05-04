@@ -128,7 +128,8 @@ MEDIA_URL = '/media/'
 MAX_UPLOAD_SIZE = 3 * 1024 * 1024  # 3MB
 
 # email setting
-# EMAIL_BACKEND = 'django.core.mail.backend.smtp.EmailBackend'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.163.com'
 EMAIL_PORT = 25
 EMAIL_HOST_USER = '18539075138@163.com'

@@ -36,6 +36,7 @@ class PostBars(models.Model):
     master = models.ForeignKey('UserAll', related_name='bar_owner', on_delete=models.CASCADE, verbose_name="用户")
     bar_number = models.IntegerField(u'帖子数', default=0)
     create_time = models.DateTimeField(u'创吧时间', default=timezone.now)
+    short_description = models.TextField(u'吧的简介', default="无")
 
     def get_pic(self):
         url = self.photo.url
@@ -117,6 +118,7 @@ class PostFloor(models.Model):
     unfold_status = models.BooleanField(u'楼层展示状态', default=True)
     floor_number = models.PositiveIntegerField(u'楼层数')
     read_status = models.BooleanField(u'楼主已读状态', default=False)
+    display_status = models.BooleanField(u'消息展示状态', default=True)
 
     class Meta():
         verbose_name = "楼"
@@ -153,7 +155,8 @@ class FloorComments(models.Model):
     content = models.TextField(u'评论内容')
     create_time = models.DateTimeField(u'发评论时间', default=timezone.now)
     read_status = models.BooleanField(u'评论消息已读状态', default=False)
-    status = models.BooleanField(u'显示状态', default=True)
+    status = models.BooleanField(u'评论显示状态', default=True)
+    display_status = models.BooleanField(u'消息展示状态', default=True)
 
     class Meta():
         ordering = ['-create_time']
@@ -203,7 +206,7 @@ class UserAll(models.Model):
     class Meta:
         verbose_name = "用户"
         verbose_name_plural = "全部用户"
-        index_together = ['username', 'password', 'email']
+        index_together = ['username', 'email']
 
 
     def get_avatar(self):
@@ -240,7 +243,7 @@ class UserPraise(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     time = models.DateTimeField(u'时间', default=timezone.now)
     read_status = models.BooleanField(u'消息已读状态', default=False)
-    display_status = models.BooleanField(u'删除状态', default=False)
+    display_status = models.BooleanField(u'消息展示状态', default=True)
 
 
 class UserFollow(models.Model):
@@ -249,7 +252,7 @@ class UserFollow(models.Model):
     time = models.DateTimeField(u'时间', default=timezone.now)
     mutual_following = models.BooleanField(u'互相关注状态',default=False)
     read_status = models.BooleanField(u'消息已读状态', default=False)
-    display_status = models.BooleanField(u'删除状态', default=False)
+    display_status = models.BooleanField(u'消息展示状态', default=True)
 
 
 class UserWatching(models.Model):
@@ -257,7 +260,7 @@ class UserWatching(models.Model):
     bar = models.ForeignKey(PostBars, on_delete=models.CASCADE)
     time = models.DateTimeField(u'时间', default=timezone.now)
     read_status = models.BooleanField(u'消息已读状态', default=False)
-    display_status = models.BooleanField(u'删除状态', default=False)
+    display_status = models.BooleanField(u'消息展示状态', default=True)
 
 
 

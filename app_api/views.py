@@ -193,11 +193,11 @@ def email_api(request):
     if check_email(email):
         title = "你的验证码"
         code = ""
-        while(time <= 6):
+        while time <= 6:
             code += str(random.randint(0, 9))
             time += 1
         body = "你的验证码是:{}".format(code)
-
+        print(body)
         request.session['code'] = code
         send_mail(subject=title, message=body, recipient_list=[email], from_email=settings.EMAIL_HOST_USER)
         return JsonResponse({'status': True, 'msg': "发送邮件成功"})

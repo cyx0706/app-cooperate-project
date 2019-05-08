@@ -41,7 +41,7 @@ class PostBars(models.Model):
     def get_pic(self):
         url = self.photo.url
         if url:
-            return mark_safe("<img src={} width=75px height=75px></img>".format(url))
+            return mark_safe("<img src='{}' width=75px height=75px></img>".format(url))
         else:
             return "暂无图片"
 
@@ -140,10 +140,10 @@ class PostFloor(models.Model):
     def save(self, *args, **kwargs):
         # 指定楼层
         if self.floor_number:
-            pass
+            print(self.floor_number)
         else:
             # 楼层数+1
-            self.floor_number = list(PostFloor.objects.values_list('floor_number', flat=True))[-1] + 1
+            self.floor_number = list(PostFloor.objects.filter(post_id=self.post_id).values_list('floor_number', flat=True))[0] + 1
         super(PostFloor, self).save(*args, **kwargs)
 
 
@@ -237,6 +237,9 @@ class UserDetailMsg(models.Model):
     follow = models.ManyToManyField(UserAll, verbose_name='关注', through='UserFollow')
     praise = models.ManyToManyField(Post, verbose_name="点赞的帖子", blank=True, through='UserPraise', related_name='user_praise')
 
+    def __str__(self):
+        return self.user.username
+
 
 class UserPraise(models.Model):
     user = models.ForeignKey(UserDetailMsg, on_delete=models.CASCADE)
@@ -244,6 +247,18 @@ class UserPraise(models.Model):
     time = models.DateTimeField(u'时间', default=timezone.now)
     read_status = models.BooleanField(u'消息已读状态', default=False)
     display_status = models.BooleanField(u'消息展示状态', default=True)
+
+    class Meta:
+        verbose_name_plural = "点赞"
+        verbose_name = "点赞"
+
+    def get_user(self):
+        return self.user.user.username
+    get_user.short_description = "用户名"
+
+    def get_post(self):
+        return self.post.title
+    get_post.short_description = "帖子名"
 
 
 class UserFollow(models.Model):

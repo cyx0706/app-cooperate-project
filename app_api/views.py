@@ -5,12 +5,22 @@ from django.core.mail import send_mail
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.utils.translation import ugettext_lazy as _
 from django.template.defaultfilters import filesizeformat
+from django.views.decorators.cache import cache_page
 from app_api.models import *
 import json
 import re
 import hashlib
 import random
 
+def test_session(request):
+    if request.method == 'GET':
+        request.session['test'] = 'test'
+        return JsonResponse({'msg': "存储session成功"})
+    if request.method == 'POST':
+        if request.session.get('test'):
+            return JsonResponse({'status': True})
+        else:
+            return JsonResponse({'status': False})
 
 def test_delete(request):
     if request.method == 'DELETE':
@@ -26,6 +36,7 @@ def test_delete(request):
                                  'tips': "确保你的表单字段里的key是name"})
     else:
         return JsonResponse({'status': False, 'msg': "请使用delete请求!"})
+
 
 def test_list(request):
     output = []
@@ -109,6 +120,8 @@ class UserClass():
         return True
 
     def revise_pwd(self, old_pwd, new_pwd):
+        if not self.username:
+            self.username = UserAll.objects.get(id=self.id).username
         if self.check_pwd(old_pwd) and self.check_pwd(new_pwd):
             user = self.login(old_pwd)
             if user:
@@ -169,6 +182,10 @@ def login_required(func):
     def wrapper(request,*args, **kwargs):
         id = request.session.get('id')
         if id:
+            user_id = kwargs.get('user_id', None)
+            if user_id:
+                if not int(user_id) == int(id):
+                    return JsonResponse({'status': False, 'msg': "无权限"})
             decorate_func = func(request, *args, **kwargs)
             return decorate_func
         else:
@@ -206,6 +223,45 @@ def email_api(request):
         return JsonResponse({'status': True, 'msg': "发送邮件成功"})
     else:
         return JsonResponse({'status': False})
+
+
+def find_pwd_api(request):
+
+    if request.method == 'GET':
+        username = request.GET.get('username')
+        email = request.GET.get('email')
+        try:
+            user = UserAll.objects.get(email=email)
+        except UserAll.DoesNotExist as e:
+            print(e)
+            return JsonResponse({'status': False, 'msg': "邮箱未注册"})
+        if user.username != username:
+            return JsonResponse({'status': False, 'msg': "用户名不存在"})
+        else:
+            time = 1
+            title = "你的验证码"
+            code = ""
+            while time < 6:
+                code += str(random.randint(0, 9))
+                time += 1
+            body = "你的验证码是:{}".format(code)
+            request.session['code1'] = code
+            request.session['temp_id'] = user.id
+            send_mail(subject=title, message=body, recipient_list=[email], from_email=settings.EMAIL_HOST_USER)
+            return JsonResponse({'status': True, 'msg': "发送邮件成功"})
+
+    if request.method == 'POST':
+        code = request.POST.get('code')
+        print(code)
+        new_pwd = request.POST.get('new_pwd', '12345')
+        if code != request.session.get('code1'):
+            return JsonResponse({'status': False, 'msg': "验证码错误"})
+        else:
+            user_id = request.session.get('temp_id')
+            user = UserAll.objects.get(id=user_id)
+            user.password = hashlib.sha1(new_pwd.encode('utf-8')).hexdigest()
+            user.save()
+            return JsonResponse({'status': True})
 
 
 def check_email_code_api(request):
@@ -279,10 +335,11 @@ def logout_api(request):
         return JsonResponse({'status': False, 'msg': "请使用post方法"})
 
 
+@login_required
 def floor_comment_info_api(request, user_id):
 
     floor_comment_info = []
-    post_floor = PostFloor.objects.select_related('user').filter(post__bar__master_id=user_id, unfold_status=False)
+    post_floor = PostFloor.objects.select_related('user').filter(post__bar__master_id=user_id, display_status=True)
     post_floor_number = post_floor.count()
     for floor in post_floor:
         floor_comment_info.append({
@@ -302,11 +359,12 @@ def floor_comment_info_api(request, user_id):
     })
 
 
+@login_required
 def comment_info_api(request, user_id):
     comment_info = []
-    user_comment_ids = list(FloorComments.objects.filter(user_id=user_id, status=True).value_list('id', flat=True))
-    replies = FloorComments.objects.filter(replied_comment__in=user_comment_ids, status=True).select_related('user', 'reply')
-    comment_info_number = replies.cout()
+    user_comment_ids = list(FloorComments.objects.filter(user_id=user_id, status=True).values_list('id', flat=True))
+    replies = FloorComments.objects.filter((Q(replied_comment__in=user_comment_ids)| Q(reply__user_id=user_id))& Q(display_status=True)).select_related('user', 'reply')
+    comment_info_number = replies.count()
     for a_reply in replies:
         comment_info.append({
             'id': a_reply.id,
@@ -317,7 +375,7 @@ def comment_info_api(request, user_id):
             'time': str(a_reply.create_time),
             'post_id': a_reply.reply.post_id,
             'comment_floor': a_reply.reply.floor_number,
-            'reply_status': bool(a_reply.user_id==user_id),
+            'floor_reply_status': bool(a_reply.reply.user_id==int(user_id)),
             'read_status': a_reply.read_status,
         })
     replies.update(read_status=True)
@@ -327,7 +385,7 @@ def comment_info_api(request, user_id):
         'comment_info': comment_info,
     })
 
-
+@login_required
 def delete_comment_api(request, user_id):
     delete_id = request.DELETE.get('comment_id', 0)
     comment = FloorComments.objects.filter(id=delete_id)
@@ -335,7 +393,7 @@ def delete_comment_api(request, user_id):
         comment = comment[0]
         if comment.user_id == int(user_id):
             if comment.replied_comment == 0:
-                FloorComments.objects.filter(id=comment.replied_comment).delete()
+                FloorComments.objects.filter(replied_comment=comment.id).delete()
             comment.delete()
             return JsonResponse({'status': True})
         else:
@@ -344,41 +402,47 @@ def delete_comment_api(request, user_id):
         return JsonResponse({'status': False, 'msg': "id不存在", 'error_code': 3})
 
 
+@login_required
 def delete_info_api(request, user_id):
     type = request.DELETE.get('type')
     if type == 'praise':
         praise_id = request.DELETE.getlist('praise_id')
         for a_id in praise_id:
-            UserPraise.objects.filter(id=a_id).update(display_status=False)
+            UserPraise.objects.filter(id=a_id, user__user_id=user_id).update(display_status=False)
     elif type == 'comment':
         comment_id = request.DELETE.getlist('comment_id')
         for a_id in comment_id:
-            FloorComments.objects.filter(id=a_id).update(display_status=False)
+            FloorComments.objects.filter(id=a_id, user_id=user_id).update(display_status=False)
     elif type == 'floor':
         floor_id = request.DELETE.getlist('floor_id')
         for a_id in floor_id:
-            PostFloor.objects.filter(id=a_id).update(display_status=False)
+            PostFloor.objects.filter(id=a_id, user_id=user_id).update(display_status=False)
     else:
         return JsonResponse({'status': False, 'error_code': 2, 'msg': "类型错误"})
     return JsonResponse({'status': True})
 
 
+@login_required
 def praise_info_api(request, user_id):
     praise_info = []
     praise_number = 0
     post_ids = list(Post.objects.filter(writer_id=user_id).values_list('id', flat=True))
     for post_id in post_ids:
-        user_praises = UserPraise.objects.filter(post_id=post_ids).select_related('post', 'user')
+        user_praises = UserPraise.objects.filter(post_id=post_id).select_related('post', 'user__user')
         if user_praises:
-            post_photo = PostPhotos.objects.filter(post_id=post_id)[0].pic.url
+            post_photo = PostPhotos.objects.filter(post_id=post_id).first()
+            if post_photo:
+                post_photo = post_photo.pic.url
+            else:
+                post_photo = None
             for praise in user_praises:
                 praise_number += 1
                 praise_info.append({
                     'info_id': praise.id,
                     'read_status': praise.read_status,
-                    'person_id': praise.user_id,
-                    'person_avatar': praise.user.avatar.url,
-                    'person_name': praise.user.username,
+                    'person_id': praise.user.user_id,
+                    'person_avatar': praise.user.user.avatar.url,
+                    'person_name': praise.user.user.username,
                     'post_id': post_id,
                     'post_photo': post_photo,
                 })
@@ -391,33 +455,18 @@ def praise_info_api(request, user_id):
         'praise_info': praise_info,
     })
 
-
-def post_api(request):
-    if request.method == 'DELETE':
-        user_id = request.DELETE.get('user_id')
-        post_id = request.DELETE.get('post_id')
-        try:
-            post = Post.objects.get(id=post_id)
-        except Post.DoesNotExist as e:
-            print(e)
-            return JsonResponse({'status': False, 'msg': "帖子不存在"})
-        else:
-            if post.id != int(user_id):
-                return JsonResponse({'status': False, 'msg': "无权限"})
-            else:
-                post.display_status = False
-                post.save()
-                return JsonResponse({'status': True})
-
-
+@login_required
 def watching_bar_api(request, user_id):
     if request.method == 'DELETE':
         bar_id = request.DELETE.get('bar_id')
-        UserWatching.objects.filter(bar_id=bar_id, user_id=int(user_id)).update(display_status=False)
-        return JsonResponse({'status': True})
+        temp = UserWatching.objects.filter(bar_id=bar_id, user__user_id=user_id).update(display_status=False)
+        if temp:
+            return JsonResponse({'status': True})
+        else:
+            return JsonResponse({'status': False, 'msg': "不存在"})
     if request.method == 'GET':
         bar_msg = []
-        user_watching = UserWatching.objects.select_related('bar').filter(user_id=user_id)
+        user_watching = UserWatching.objects.select_related('bar').filter(user__user_id=user_id, display_status=True)
         number = user_watching.count()
         for i in user_watching:
             bar_msg.append({
@@ -431,8 +480,16 @@ def watching_bar_api(request, user_id):
             'total_number': number,
             'bar_msg': bar_msg,
         })
+    if request.method == 'POST':
+        bar_id = request.POST.get('bar_id')
+        if not PostBars.objects.filter(id=bar_id):
+            return JsonResponse({'status': False, 'msg': "不存在"})
+        user_msg_id = UserAll.objects.get(id=user_id).user_msg.id
+        UserWatching.objects.update_or_create(user_id=user_msg_id, bar_id=bar_id, defaults={'display_status':True})
+        return JsonResponse({'status': True})
 
 
+@login_required
 def msg_api(request, user_id):
     if request.method == 'DELETE':
         type = request.DELETE.get('type')
@@ -450,10 +507,12 @@ def msg_api(request, user_id):
     if request.method == 'GET':
         new_follower = []
         new_watcher = []
-        followers = UserFollow.objects.select_related('user').filter(follower_id=int(user_id), display_status=True)[10]
+        follower_update_ids = []
+        followers = UserFollow.objects.select_related('user').filter(follower_id=int(user_id), display_status=True)[0:10]
         new_follower_number = followers.count()
         for follower in followers:
-            person  = follower.user.user
+            person = follower.user.user
+            follower_update_ids.append(follower.id)
             new_follower.append({
                 'id': follower.id,
                 'user': person.id,
@@ -461,12 +520,15 @@ def msg_api(request, user_id):
                 'username': person.username,
                 'read_status': follower.read_status,
             })
-        followers.objects.update(read_status=True)
+        UserFollow.objects.filter(id__in=follower_update_ids).update(read_status=True)
+
+        watcher_update_ids = []
         bar_ids = PostBars.objects.filter(master_id=user_id).values_list('id', flat=True)
-        watchers = UserWatching.objects.filter(bar_id__in=bar_ids).select_related('user', 'user__user')[10]
+        watchers = UserWatching.objects.filter(bar_id__in=bar_ids, display_status=True).select_related('user', 'user__user')[0:10]
         new_watcher_number = watchers.count()
         for watcher in watchers:
             person = watcher.user
+            watcher_update_ids.append(watcher.id)
             new_watcher.append({
                 'id': watcher.id,
                 'user': person.user_id,
@@ -474,6 +536,8 @@ def msg_api(request, user_id):
                 'username': person.user.username,
                 'read_status': watcher.read_status,
             })
+        UserWatching.objects.filter(id__in=watcher_update_ids).update(read_status=True)
+
         return JsonResponse({
             'user_id': int(user_id),
             'limit': 10,
@@ -485,10 +549,8 @@ def msg_api(request, user_id):
         })
 
 
+@login_required
 def user_concern_api(request, user_id):
-
-    if int(request.session.get('id', 0)) != int(user_id):
-        return JsonResponse({'status': False, 'error_code': 1, 'msg': "无权限"})
 
     if request.method == 'DELETE':
         delete_id = request.DELETE.get('user_id')
@@ -528,11 +590,13 @@ def user_concern_api(request, user_id):
                 temp.update(mutual_following=True)
             else:
                 flag = False
-            UserFollow.objects.update_or_create(Q(follower_id=concern_id) & Q(user__user_id=user_id),
-                                                defaults={'mutual_following': flag, 'display_status': True})
+            user_msg_id = UserAll.objects.get(id=user_id).user_msg.id
+            new_follower = UserFollow.objects.update_or_create(follower_id=concern_id, user_id=user_msg_id,
+                                                               defaults={'mutual_following': flag, 'display_status': True})
             return JsonResponse({'status': True})
 
 
+@login_required
 def user_follower_api(request, user_id):
     user_followers = UserFollow.objects.select_related('user__user').filter(follower_id=user_id, display_status=True)
     follower_number = user_followers.count()
@@ -550,6 +614,8 @@ def user_follower_api(request, user_id):
         'follower': follower,
     })
 
+
+@login_required
 def user_collection_api(request, user_id):
     try:
         user = UserDetailMsg.objects.get(user_id=user_id)
@@ -558,7 +624,10 @@ def user_collection_api(request, user_id):
         return JsonResponse({'status': False, 'msg': "不存在"})
     if request.method == 'DELETE':
         post_id = request.DELETE.get('post_id')
-        user.collections.filter(post_id=post_id).delete()
+        temp = user.collections.filter(id=post_id).delete()
+        user.save()
+        if int(list(temp)[0]) == 0:
+            return JsonResponse({'status': False, 'msg': "收藏不存在"})
         return JsonResponse({'status': True})
     if request.method == 'GET':
         collections = []
@@ -579,7 +648,23 @@ def user_collection_api(request, user_id):
             'collection_number': collection_number,
             'collections': collections
         })
+    if request.method == 'POST':
+        post_id = request.POST.get('post_id')
+        try:
+            post = Post.objects.get(id=post_id)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'status': False, 'msg': "帖子不存在"})
+        if user.collections.filter(id=post.id):
+            return JsonResponse({'status': False, 'msg': "收藏过了", 'error_code':3})
+        else:
+            user.collections.add(post)
+            user.save()
+        return JsonResponse({'status': True})
 
+
+@cache_page(60*5)
+@login_required
 def personal_center_api(request, user_id):
     try:
         user = UserAll.objects.get(id=user_id)
@@ -588,12 +673,17 @@ def personal_center_api(request, user_id):
         return JsonResponse({'status': False, 'msg': "用户不存在"})
     else:
         if request.method == 'GET':
+            birthday = user.user_msg.birthday
+            if birthday is None:
+                birthday = None
+            else:
+                birthday = str(birthday)
             return JsonResponse({
                 'user_id': user_id,
                 'username': user.username,
                 'gender': user.user_msg.gender,
                 'description': user.user_msg.description,
-                'birthday': str(user.user_msg.birthday),
+                'birthday': birthday,
                 'avatar': user.avatar.url,
                 'follower_number': user.user_msg.follow.count(),
                 'collection_number': user.user_msg.collections.count(),
@@ -605,30 +695,36 @@ def personal_center_api(request, user_id):
         if request.method == 'POST':
             username = request.POST.get('username', None)
             description = request.POST.get('description', None)
-            gender = request.POST.get('gender', 0)
+            gender = int(request.POST.get('gender', 2))
             birthday = request.POST.get('birthday', None)
             interests = request.POST.getlist('interests', None)
-            if UserAll.objects.filter(Q(id!=user_id) & Q(username=username)):
+            if UserAll.objects.exclude(id=user_id).filter(username=username):
                 return JsonResponse({'status': False, 'msg': "用户名已经存在"})
             else:
-                user.username = username
+                if username:
+                    user.username = username
             if description:
                 user.user_msg.description = description
-            if gender:
+            if gender and gender in [0, 1, 2]:
                 user.user_msg.gender = gender
-            if re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
-                print(birthday)
+            if birthday and re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
                 user.user_msg.birthday = birthday
             if interests:
+                user.user_msg.interest.all().delete()
                 for i in interests:
+                    if user.user_msg.interest.filter(type=i):
+                        continue
                     try:
                         user.user_msg.interest.add(Tags.objects.get(type=i))
                     except Exception as e:
                         print(e)
                         continue
             user.save()
+            user.user_msg.save()
             return JsonResponse({'status': True})
 
+
+@login_required
 def pwd_reset(request, user_id):
     old_pwd = request.POST.get('old_pwd')
     new_pwd = request.POST.get('new_pwd')
@@ -660,3 +756,347 @@ def upload_photo(request):
                 return JsonResponse({'status': False, 'msg': "图片格式错误或太大了"})
         else:
             return JsonResponse({'status': False, 'msg': "指定类型不存在"})
+
+
+@login_required
+def search_api(request):
+    user_id =request.session.get('id')
+    output = []
+    type = request.GET.get('type', 'post')
+    search = request.GET.get('search')
+    print(search)
+    if not search:
+        return JsonResponse({'status': False, 'msg': "请指定查找内容"})
+    if type == 'bar':
+        bars = PostBars.objects.filter(name__icontains=search)
+        for bar in bars:
+            output.append({
+                'bar_id': bar.id,
+                'bar_title': bar.name,
+                'bar_description': bar.short_description,
+                'bar_icon': bar.photo.url,
+                'post_number': bar.bar_number,
+                'watching_number': UserWatching.objects.filter(bar_id=bar.id).count(),
+                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id)),
+            })
+        return JsonResponse({
+            'bar_number': bars.count(),
+            'bar_msg': output,
+        })
+    elif type == 'post':
+        posts = Post.objects.select_related('writer', 'bar').filter(title__icontains=search, display_status=True)
+        for post in posts:
+            pics = PostPhotos.objects.filter(post_id=post.id)
+            if pics:
+                photo_url = pics[0].pic.url
+            else:
+                photo_url = None
+            output.append({
+                'post_id': post.id,
+                'post_writer_id': post.writer_id,
+                'post_writer_name': post.writer.username,
+                'post_writer_avatar': post.writer.avatar.url,
+                'post_content': post.content,
+                'bar_name': post.bar.name,
+                'post_photo': photo_url,
+                'comment_number': FloorComments.objects.filter(reply_id=post.id).count(),
+                'praise_number': UserPraise.objects.filter(post_id=post.id).count(),
+            })
+        return JsonResponse({
+            'post_number': posts.count(),
+            'post_msg': output,
+        })
+    elif type == 'user':
+        users = UserAll.objects.filter(username__icontains=search)
+        for user in users:
+            output.append({
+                'user_id': user.id,
+                'user_avatar': user.avatar.url,
+                'user_name': user.username,
+                'user_followers': UserFollow.objects.filter(follower_id=user.id).count(),
+            })
+        return JsonResponse({
+            'user_number': users.count(),
+            'user_msg': output,
+        })
+    else:
+        return JsonResponse({'status': False, 'msg': "类型指定错误"})
+
+
+@login_required
+def floor_msg_api(request, post_id):
+    try:
+        post = Post.objects.get(id=post_id)
+    except Post.DoesNotExist as e:
+        print(e)
+        return JsonResponse({'status': False, 'msg': "不存在"})
+    else:
+        if request.method == 'POST':
+            user_id = request.POST.get('user_id')
+            if not int(request.session.get('id')) == int(user_id):
+                return JsonResponse({'status': False, 'msg': "无权限"})
+            reply_id = int(request.POST.get('reply_id'))
+            reply_floor = request.POST.get('reply_floor')
+            # 待加入敏感词过滤
+            content = request.POST.get('content')
+            if FloorComments.objects.filter(id=reply_id) or reply_id == 0:
+                floor = PostFloor.objects.filter(post=post, floor_number=reply_floor)
+                if floor:
+                    floor = floor[0]
+                    FloorComments(reply_id=floor.id, user_id=user_id, content=content, replied_comment=reply_id).save()
+                    return JsonResponse({'status': True})
+                else:
+                    return JsonResponse({'status': False, 'msg': "楼层不存在"})
+            else:
+                return JsonResponse({'status': False, 'msg': "评论不存在"})
+        if request.method == 'GET':
+            floor = request.GET.get('floor')
+            # 指定检索楼层
+            if floor:
+                post_floor = PostFloor.objects.filter(post=post, floor_number=floor, unfold_status=True)
+                if not post_floor:
+                    return JsonResponse({'status': False, 'msg': "不存在"})
+                else:
+                    comment_msg = []
+                    post_floor = post_floor[0]
+                    comments = FloorComments.objects.select_related('user').filter(Q(reply_id=post_floor.id) & Q(display_status=True))
+                    for comment in comments:
+                        if bool(comment.replied_comment):
+                            temp = FloorComments.objects.get(id=comment.replied_comment)
+                            reply_person_id = temp.user_id
+                            reply_person_name = temp.user.username
+                        else:
+                            reply_person_id = None
+                            reply_person_name = None
+                        comment_msg.append({
+                            'comment_id': comment.id,
+                            'reply_status': bool(comment.replied_comment),
+                            'reply_person_name': reply_person_name,
+                            'reply_person_id': reply_person_id,
+                            'person_id': comment.user_id,
+                            'person_name': comment.user.username,
+                            'person_avatar': comment.user.avatar.url,
+                            'datetime': str(comment.create_time),
+                            'content': comment.content,
+                        })
+                    return JsonResponse({
+                        'status': True,
+                        'floor_number': floor,
+                        'floor_content': post_floor.content,
+                        'floor_writer_id': post_floor.user_id,
+                        'floor_writer_name': post_floor.user.username,
+                        'floor_writer_avatar': post_floor.user.avatar.url,
+                        'comment_number': comments.count(),
+                        'comment_msg': comment_msg,
+                    })
+            else:
+                floor_info = []
+                page = request.GET.get('page', 1)
+                post_floor = PostFloor.objects.select_related('user').filter(post=post, unfold_status=True)
+                paginator = Paginator(post_floor, 5)
+                num_page = paginator.num_pages
+                try:
+                    current_page = paginator.page(page)
+                    limited_floors = current_page.object_list
+                except PageNotAnInteger:
+                    current_page = paginator.page(1)
+                    limited_floors = current_page.object_list
+                except EmptyPage:
+                    current_page = paginator.page(1)
+                    limited_floors = current_page.object_list
+                for i in limited_floors:
+                    comment_msg = []
+                    comments = FloorComments.objects.select_related('user').filter(Q(reply_id=i.id) & Q(display_status=True))[0:2]
+                    comments_len = comments.count()
+                    if comments:
+                        for comment in comments:
+                            if bool(comment.replied_comment):
+                                temp = FloorComments.objects.get(id=comment.replied_comment)
+                                reply_person_id = temp.user_id
+                                reply_person_name = temp.user.username
+                            else:
+                                reply_person_id = None
+                                reply_person_name = None
+                            comment_msg.append({
+                                'comment_id': comment.id,
+                                'reply_status': bool(comment.replied_comment),
+                                'reply_person_name': reply_person_name,
+                                'reply_person_id': reply_person_id,
+                                'person_id': comment.user_id,
+                                'person_name': comment.user.username,
+                                'person_avatar': comment.user.avatar.url,
+                                'datetime': str(comment.create_time),
+                                'content': comment.content,
+                            })
+                    floor_info.append({
+                        'floor': i.floor_number,
+                        'person_id': i.user_id,
+                        'person_name': i.user.username,
+                        'person_avatar': i.user.avatar.url,
+                        'datetime': str(i.create_time),
+                        'content': i.content,
+                        'max_display_number': 2,
+                        'comment_number': comments_len,
+                        'comment': comment_msg,
+                    })
+                return JsonResponse({
+                    'floor_number': post_floor.count(),
+                    'total_page': num_page,
+                    'per_page': 5,
+                    'current_page': current_page.number,
+                    'number': len(limited_floors),
+                    'floor_info': floor_info,
+                })
+
+
+@login_required
+@cache_page(60*10)
+def post_msg_api(request, post_id):
+    try:
+        post = Post.objects.get(id=post_id)
+    except Post.DoesNotExist as e:
+        print(e)
+        return JsonResponse({'status': False, 'msg': "不存在"})
+    else:
+        user_id = request.session.get('id')
+        post_msg = {
+            'person_id': post.writer_id,
+            'person_avatar': post.writer.avatar.url,
+            'follow_status': bool(UserFollow.objects.filter(user__user_id=user_id, follower_id=post.writer_id)),
+            'time': str(post.create_time),
+            'pic': list(PostPhotos.objects.filter(post_id=post_id).values_list('pic', flat=True)),
+            'content': post.content,
+            'bar_id': post.bar_id,
+            'bar': post.bar.name,
+        }
+        return JsonResponse({
+            'status': True,
+            'user_id': user_id,
+            'collection_status': bool(UserAll.objects.get(id=user_id).user_msg.collections.filter(id=post_id)),
+            'praise_status': bool(UserAll.objects.get(id=user_id).user_msg.praise.filter(id=post_id)),
+            'post_msg': post_msg,
+        })
+
+@login_required
+def praise_api(request):
+
+    if request.method == 'DELETE':
+        user_id = request.DELETE.get('user_id')
+        if int(user_id) != request.session.get('id'):
+            return JsonResponse({'status': False, 'msg': "无权限"})
+        post_id = request.DELETE.get('post_id')
+        temp = UserPraise.objects.filter(Q(post_id=post_id)& Q(user__user_id=user_id)).update(display_status=False)
+        if temp != 0:
+            return JsonResponse({'status': True})
+        else:
+            return JsonResponse({'status': False, 'msg': "不存在"})
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        if int(user_id) != request.session.get('id'):
+            return JsonResponse({'status': False, 'msg': "无权限"})
+        post_id = request.POST.get('post_id')
+        if not Post.objects.filter(id=post_id, display_status=True):
+            return JsonResponse({'status': False, 'msg': "帖子不存在"})
+        user_msg_id = UserAll.objects.get(id=user_id).user_msg.id
+        UserPraise.objects.update_or_create(post_id=post_id, user_id=user_msg_id, defaults={'display_status': True})
+        return JsonResponse({'status': True})
+
+
+@login_required
+def home_api(request):
+
+    if request.method == 'GET':
+        flag = False
+        post_msg = []
+        user_id = request.GET.get('user')
+        page = request.GET.get('page', 1)
+        if user_id:
+            posts = Post.objects.filter(writer_id=user_id)
+            flag = True
+        else:
+            person_id = request.session.get('id')
+            person = UserAll.objects.get(id=person_id)
+            interests = person.user_msg.interest.all()
+            posts1 = Post.objects.filter(bar__feature__in=interests, display_status=True)
+            ids = list(UserPraise.objects.annotate(count=Count('post_id')).order_by('-count').values_list('post', flat=True))
+            posts2 = Post.objects.filter(id__in=ids)
+            post3 = Post.objects.all()[0:20]
+            posts = list((posts2 | posts1 | post3).distinct())
+        paginator = Paginator(posts, 7)
+        num_page = paginator.num_pages
+        try:
+            current_page = paginator.page(page)
+            limited_posts = current_page.object_list
+        except PageNotAnInteger:
+            current_page = paginator.page(1)
+            limited_posts = current_page.object_list
+        except EmptyPage:
+            current_page = paginator.page(1)
+            limited_posts = current_page.object_list
+        for i in limited_posts:
+            print(i)
+            pics = list(PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True))
+            if len(pics) > 3:
+                pics = PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)[2]
+            post_msg.append({
+                'post_id': i.id,
+                'post_pic': pics,
+                'post_content': i.content,
+                'comment_number': FloorComments.objects.filter(reply_id=i.id).count(),
+                'praise_number': UserPraise.objects.filter(post_id=i.id).count(),
+                'bar_id': i.bar_id,
+                'bar_name': i.bar.name,
+                'bar_tags': list(i.bar.feature.values_list('type', flat=True)),
+            })
+            if flag:
+                post_msg.append({
+                    'writer_id': i.writer_id,
+                    'writer_name': i.writer.username,
+                    'writer_avatar': i.writer.avatar.url,
+                })
+        return JsonResponse({
+            'number': len(posts),
+            'page': current_page.number,
+            'this_page': len(limited_posts),
+            'total_page': num_page,
+            'per_page': 7,
+            'post_msg': post_msg,
+        })
+
+
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id', 0)
+        bar_id = request.POST.get('bar_id', 0)
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        pics = request.FILES.getlist('pic')
+        if not request.session.get('id', None) != int(user_id):
+            return JsonResponse({'status': False, 'msg': "无权限"})
+        else:
+            # 开个线程写入图片
+            new_post = Post(writer_id=user_id, bar_id=bar_id, title=title, content=content)
+            new_post.save()
+            post_id = new_post.id
+            for pic in pics:
+                PostPhotos.objects.create(post_id=post_id, pic=pic)
+            return JsonResponse({'status': True})
+
+    if request.method == 'DELETE':
+        user_id = request.DELETE.get('user_id')
+        post_id = request.DELETE.get('post_id')
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist as e:
+            print(e)
+            return JsonResponse({'status': False, 'msg': "帖子不存在"})
+        else:
+            if post.writer_id != int(user_id):
+                return JsonResponse({'status': False, 'msg': "无权限"})
+            else:
+                post.display_status = False
+                FloorComments.objects.filter(reply__post_id=post_id).update(display_status=False)
+                post.save()
+                return JsonResponse({'status': True})
+
+
+

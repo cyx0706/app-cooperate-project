@@ -29,10 +29,10 @@ class CommentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CommentForm, self).__init__(*args, **kwargs)
-        self.fields['replied_comment'].choices = tuple([(str(x), x) for x in FloorComments.objects.filter(replied_comment=0).values_list('id',flat=True)]+[(0,0)])
+        self.fields['replied_comment'].choices = tuple([(str(x), x) for x in FloorComments.objects.filter(display_status=True).values_list('id',flat=True)]+[(0,0)])
         self.initial['replied_comment'] = [0]
 
-    def clean_reply_id(self):
+    def clean_replied_comment(self):
         reply_id = self.cleaned_data['replied_comment'] # 回复的id
         comment = self.cleaned_data['reply'] # 回复的楼层
         if int(reply_id) != 0:

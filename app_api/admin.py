@@ -12,6 +12,8 @@ admin.site.disable_action('delete_selected')
 class UserEXInfo(admin.StackedInline):
     model = UserDetailMsg
     fk_name = 'user'
+    filter_horizontal = ('collections', 'interest')
+
 
 
 @admin.register(UserAll)
@@ -25,6 +27,12 @@ class UserAdmin(admin.ModelAdmin):
         ('status', admin.BooleanFieldListFilter),
     )
 
+    def get_fields(self, request, obj=None):
+        if obj:
+            return ['username', 'email', 'avatar']
+        else:
+            super(UserAdmin).get_fields(request, obj)
+
     def block_user(self, request, queryset):
         row_updated = queryset.update(status=False)
         message_bit = "屏蔽了%s个用户" % row_updated
@@ -35,7 +43,6 @@ class UserAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.password = hashlib.sha1(obj.password.encode('utf-8')).hexdigest()
         super().save_model(request, obj, form, change)
-
 
 
 @admin.register(Tags)
@@ -111,7 +118,7 @@ class FloorCommentInline(admin.TabularInline):
 class PostFloorAdmin(admin.ModelAdmin):
 
     list_per_page = 15
-    list_display = ['get_post', 'get_user', 'floor_number']
+    list_display = ['id','get_post', 'get_user', 'floor_number']
     readonly_fields = ['floor_number']
     inlines = [FloorCommentInline,]
 
@@ -154,12 +161,12 @@ class FloorCommentAdmin(admin.ModelAdmin):
     )
     form = forms.CommentForm
 
-    def get_readonly_fields(self, request, obj=None):
-        if not obj:
-            self.readonly_fields = []
-        else:
-            self.readonly_fields = ['reply']
-        return self.readonly_fields
+    # def get_readonly_fields(self, request, obj=None):
+    #     if not obj:
+    #         self.readonly_fields = []
+    #     else:
+    #         self.readonly_fields = ['reply']
+    #     return self.readonly_fields
 
     def save_model(self, request, obj, form, change):
         replied_comment = form.cleaned_data['replied_comment']
@@ -167,3 +174,16 @@ class FloorCommentAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+@admin.register(UserWatching)
+class UserWatchingAdmin(admin.ModelAdmin):
+    list_per_page = 10
+
+
+@admin.register(UserPraise)
+class UserPraiseAdmin(admin.ModelAdmin):
+    list_per_page = 10
+    list_display = ['id', 'get_user', 'get_post']
+
+@admin.register(UserFollow)
+class UserFollowAdmin(admin.ModelAdmin):
+    list_per_page = 10

@@ -119,11 +119,12 @@ class PostFloorAdmin(admin.ModelAdmin):
 
     list_per_page = 15
     list_display = ['id','get_post', 'get_user', 'floor_number']
-    readonly_fields = ['floor_number']
     inlines = [FloorCommentInline,]
 
     def get_readonly_fields(self, request, obj=None):
-        if obj:
+        # 只允许创建时选择帖
+        if not obj:
+            self.readonly_fields = ['floor_number']
             return self.readonly_fields
         else:
             self.readonly_fields = ['floor_number', 'post']

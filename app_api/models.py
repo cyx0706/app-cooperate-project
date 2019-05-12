@@ -79,7 +79,7 @@ class Post(models.Model):
 
     def get_bar(self):
         return self.bar.name
-    get_bar.short_description = "所属吧"
+    get_bar.short_description = "所属帖子"
 
     def get_writer(self):
         return self.writer.username

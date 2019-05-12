@@ -114,12 +114,29 @@ class FloorCommentInline(admin.TabularInline):
     max_num = 2
 
 
+class PostListFilter(admin.SimpleListFilter):
+    title = "按吧分"
+    parameter_name = 'by_bar'
+
+    def lookups(self, request, model_admin):
+        return ((t.id, t.name) for t in PostBars.objects.all())
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(post__bar=self.value())
+        else:
+            return queryset
+
+
 @admin.register(PostFloor)
 class PostFloorAdmin(admin.ModelAdmin):
 
     list_per_page = 15
     list_display = ['id','get_post', 'get_user', 'floor_number']
     inlines = [FloorCommentInline,]
+    list_filter = (
+        (PostListFilter),
+    )
 
     def get_readonly_fields(self, request, obj=None):
         # 只允许创建时选择帖

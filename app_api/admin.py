@@ -177,16 +177,27 @@ class FloorCommentAdmin(admin.ModelAdmin):
 @admin.register(UserWatching)
 class UserWatchingAdmin(admin.ModelAdmin):
     list_per_page = 10
+    list_display = ['id', 'display_status']
+    list_filter = (
+        ('display_status', admin.BooleanFieldListFilter),
+    )
 
 
 @admin.register(UserPraise)
 class UserPraiseAdmin(admin.ModelAdmin):
     list_per_page = 10
-    list_display = ['id', 'get_user', 'get_post']
+    list_display = ['id', 'get_user', 'get_post', 'display_status']
+    list_filter = (
+        ('display_status', admin.BooleanFieldListFilter),
+    )
 
 @admin.register(UserFollow)
 class UserFollowAdmin(admin.ModelAdmin):
     list_per_page = 10
+    list_display = ['id', 'display_status']
+    list_filter = (
+        ('display_status', admin.BooleanFieldListFilter),
+    )
 
 
 @admin.register(SensitiveWord)

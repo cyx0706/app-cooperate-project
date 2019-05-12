@@ -191,6 +191,10 @@ class PostPhotos(models.Model):
         verbose_name = "图片"
         verbose_name_plural = "图片"
 
+    def save(self, *args, **kwargs):
+        self.pic.name = '{}.jpg'.format(''.join(str(uuid.uuid4()).split('-')))
+        super(PostPhotos, self).save(*args,**kwargs)
+
 
 class UserAll(models.Model):
     username = models.CharField(u'姓名', max_length=50)
@@ -245,7 +249,8 @@ class UserPraise(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     time = models.DateTimeField(u'时间', default=timezone.now)
     read_status = models.BooleanField(u'消息已读状态', default=False)
-    display_status = models.BooleanField(u'消息展示状态', default=True)
+    info_status = models.BooleanField(u'消息展示状态', default=True)
+    display_status = models.BooleanField(u'展示状态', default=True)
 
     class Meta:
         verbose_name_plural = "点赞"
@@ -266,7 +271,15 @@ class UserFollow(models.Model):
     time = models.DateTimeField(u'时间', default=timezone.now)
     mutual_following = models.BooleanField(u'互相关注状态',default=False)
     read_status = models.BooleanField(u'消息已读状态', default=False)
-    display_status = models.BooleanField(u'消息展示状态', default=True)
+    info_status = models.BooleanField(u'消息展示状态', default=True)
+    display_status = models.BooleanField(u'展示状态', default=True)
+
+    class Meta:
+        verbose_name_plural = "用户关注的人"
+        verbose_name = verbose_name_plural
+
+    def __str__(self):
+        return self.user.user.username + "关注:" + self.follower.username
 
 
 class UserWatching(models.Model):
@@ -274,7 +287,15 @@ class UserWatching(models.Model):
     bar = models.ForeignKey(PostBars, on_delete=models.CASCADE)
     time = models.DateTimeField(u'时间', default=timezone.now)
     read_status = models.BooleanField(u'消息已读状态', default=False)
-    display_status = models.BooleanField(u'消息展示状态', default=True)
+    info_status = models.BooleanField(u'消息展示状态', default=True)
+    display_status = models.BooleanField(u'展示状态', default=True)
+
+    class Meta:
+        verbose_name_plural = "用户关注的吧"
+        verbose_name = verbose_name_plural
+
+    def __str__(self):
+        return self.user.user.username + "关注:" + self.bar.name
 
 
 class SensitiveWord(models.Model):

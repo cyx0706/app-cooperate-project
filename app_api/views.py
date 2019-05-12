@@ -403,6 +403,7 @@ def comment_info_api(request, user_id):
         'comment_info': comment_info,
     })
 
+
 @login_required
 def delete_comment_api(request, user_id):
     delete_id = request.DELETE.get('comment_id', 0)
@@ -426,7 +427,7 @@ def delete_info_api(request, user_id):
     if type == 'praise':
         praise_id = request.DELETE.getlist('praise_id')
         for a_id in praise_id:
-            UserPraise.objects.filter(id=a_id, user__user_id=user_id).update(display_status=False)
+            UserPraise.objects.filter(id=a_id, user__user_id=user_id).update(info_status=False)
     elif type == 'comment':
         comment_id = request.DELETE.getlist('comment_id')
         for a_id in comment_id:
@@ -446,7 +447,7 @@ def praise_info_api(request, user_id):
     praise_number = 0
     post_ids = list(Post.objects.filter(writer_id=user_id).values_list('id', flat=True))
     for post_id in post_ids:
-        user_praises = UserPraise.objects.filter(post_id=post_id).select_related('post', 'user__user')
+        user_praises = UserPraise.objects.filter(post_id=post_id, display_status=True, info_status=True).select_related('post', 'user__user')
         if user_praises:
             post_photo = PostPhotos.objects.filter(post_id=post_id).first()
             if post_photo:
@@ -473,11 +474,12 @@ def praise_info_api(request, user_id):
         'praise_info': praise_info,
     })
 
+
 @login_required
 def watching_bar_api(request, user_id):
     if request.method == 'DELETE':
         bar_id = request.DELETE.get('bar_id')
-        temp = UserWatching.objects.filter(bar_id=bar_id, user__user_id=user_id).update(display_status=False)
+        temp = UserWatching.objects.filter(bar_id=bar_id, user__user_id=user_id).update(display_status=False, info_status=False)
         if temp:
             return JsonResponse({'status': True})
         else:
@@ -514,11 +516,11 @@ def msg_api(request, user_id):
         if type == 'watching':
             watching_ids = request.DELETE.getlist('watching_ids')
             for i in watching_ids:
-                UserWatching.objects.filter(id=i).update(display_status=False)
+                UserWatching.objects.filter(id=i).update(info_status=False)
         elif type == 'following':
             following_ids = request.DELETE.getlist('following_ids')
             for i in following_ids:
-                UserFollow.objects.filter(id=i).update(display_status=False)
+                UserFollow.objects.filter(id=i).update(info_status=False)
         else:
             return JsonResponse({'status': False, 'msg': '类型错误', 'error_code': 2})
         return JsonResponse({'status': True})
@@ -526,7 +528,7 @@ def msg_api(request, user_id):
         new_follower = []
         new_watcher = []
         follower_update_ids = []
-        followers = UserFollow.objects.select_related('user').filter(follower_id=int(user_id), display_status=True)[0:10]
+        followers = UserFollow.objects.select_related('user').filter(follower_id=int(user_id), display_status=True, info_status=True)[0:10]
         new_follower_number = followers.count()
         for follower in followers:
             person = follower.user.user
@@ -542,7 +544,7 @@ def msg_api(request, user_id):
 
         watcher_update_ids = []
         bar_ids = PostBars.objects.filter(master_id=user_id).values_list('id', flat=True)
-        watchers = UserWatching.objects.filter(bar_id__in=bar_ids, display_status=True).select_related('user', 'user__user')[0:10]
+        watchers = UserWatching.objects.filter(bar_id__in=bar_ids, display_status=True, info_status=True).select_related('user', 'user__user')[0:10]
         new_watcher_number = watchers.count()
         for watcher in watchers:
             person = watcher.user
@@ -574,7 +576,7 @@ def user_concern_api(request, user_id):
         delete_id = request.DELETE.get('user_id')
         temp = UserFollow.objects.filter(user__user_id=user_id, follower_id=delete_id)
         if temp:
-            temp.update(display_status=False, mutual_following=False)
+            temp.update(display_status=False, mutual_following=False, info_status=False)
             UserFollow.objects.filter(user__user_id=delete_id, follower_id=user_id).update(mutual_following=False)
             return JsonResponse({'status': True})
         else:
@@ -753,7 +755,7 @@ def pwd_reset(request, user_id):
     else:
         return JsonResponse({'status': False, 'msg': "原密码错误"})
 
-
+@login_required
 def upload_photo(request):
     user_id = request.POST.get('user_id')
     if int(request.session.get('id')) != int(user_id):
@@ -1101,13 +1103,17 @@ def home_api(request):
 
 
     if request.method == 'POST':
-        print(request.POST)
         user_id = request.POST.get('user_id', 0)
         bar_id = request.POST.get('bar_id', 0)
         title = request.POST.get('title')
         content = request.POST.get('content')
         pics = request.FILES.getlist('pic')
-        if not request.session.get('id', None) == int(user_id):
+        print(user_id)
+        print(bar_id)
+        print(title)
+        print(content)
+        print(pics)
+        if not request.session.get('id', None) != int(user_id):
             return JsonResponse({'status': False, 'msg': "无权限"})
         else:
             # 多线程写入图片

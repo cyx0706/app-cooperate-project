@@ -236,7 +236,8 @@ def email_api(request):
             time += 1
         body = "你的验证码是:{}".format(code)
         request.session['code'] = code
-        send_mail(subject=title, message=body, recipient_list=[email], from_email=settings.EMAIL_HOST_USER)
+        t = threading.Thread(target=send_mail(subject=title, message=body, recipient_list=[email], from_email=settings.EMAIL_HOST_USER))
+        t.start()
         return JsonResponse({'status': True, 'msg': "发送邮件成功"})
     else:
         return JsonResponse({'status': False})

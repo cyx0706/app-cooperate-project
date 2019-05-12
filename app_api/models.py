@@ -233,7 +233,7 @@ class UserDetailMsg(models.Model):
     birthday = models.DateField(u'生日', blank=True, null=True)
     gender = models.IntegerField(u'性别', choices=GENDER_CHOICE, blank=True, default=2)
     description = models.TextField(u'个人简介', blank=True)
-    background_pic = models.ImageField(u'个人中心背景', upload_to=photo_path, blank=True)
+    background_pic = models.ImageField(u'个人中心背景', upload_to=photo_path, blank=True, default='back_default.jpg')
 
     watching = models.ManyToManyField(PostBars, verbose_name='关注的吧', through='UserWatching')
     collections = models.ManyToManyField(Post, verbose_name='收藏的帖子', related_name='user_collection', blank=True)

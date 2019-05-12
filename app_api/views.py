@@ -155,7 +155,7 @@ class UserClassForProject(UserClass):
     def __init__(self, id=0, name=None):
         super().__init__(id, name)
 
-    def create_user(self, password, email, interest, description, birthday):
+    def create_user(self, password, email, interest, description, birthday, gender):
         if self.check_pwd(password):
             user = UserAll(username=self.username, email=email,
                            password=hashlib.sha1(password.encode('utf-8')).hexdigest())
@@ -173,6 +173,7 @@ class UserClassForProject(UserClass):
                 user_msg.description = description
             if birthday:
                 user_msg.birthday = birthday
+            user_msg.gender = int(gender)
             user_msg.save()
             return True
         else:
@@ -322,6 +323,7 @@ def register_api(request):
             interest = request.POST.getlist('interest')
             birthday = request.POST.get('birthday')
             description = request.POST.get('description')
+            gender = request.POST.get('gender', 2)
             new_user = UserClassForProject(name=username)
 
             if not re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
@@ -334,7 +336,7 @@ def register_api(request):
             if not new_user.check_uniqueness_name():
                 return JsonResponse({'status': False, 'msg': "用户名已存在", 'error_code': 3})
 
-            if new_user.create_user(password, email, interest, description, birthday):
+            if new_user.create_user(password, email, interest, description, birthday, gender):
                 return JsonResponse({'status': True, 'msg': "创建用户成功"})
             else:
                 return JsonResponse({'status': False, 'error_code': 3, 'msg': "密码不能为空"})

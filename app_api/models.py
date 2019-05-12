@@ -215,7 +215,7 @@ class UserAll(models.Model):
     def get_avatar(self):
         url = self.avatar.url
         if url:
-            return mark_safe('<img src="{}" width="75px"></img>'.format(url))
+            return mark_safe('<img src="{}" width="50px"></img>'.format(url))
         else:
             return "暂无图片"
     get_avatar.short_description = "头像缩略图"

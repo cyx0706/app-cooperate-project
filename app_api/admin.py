@@ -27,12 +27,6 @@ class UserAdmin(admin.ModelAdmin):
         ('status', admin.BooleanFieldListFilter),
     )
 
-    def get_fields(self, request, obj=None):
-        if obj:
-            return ['username', 'email', 'avatar']
-        else:
-            super(UserAdmin).get_fields(request, obj)
-
     def block_user(self, request, queryset):
         row_updated = queryset.update(status=False)
         message_bit = "屏蔽了%s个用户" % row_updated

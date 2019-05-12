@@ -47,6 +47,7 @@ class PostBars(models.Model):
 
     def get_master(self):
         return self.master.username
+    get_master.short_description = "吧主"
 
     def __str__(self):
         return self.name
@@ -235,8 +236,8 @@ class UserDetailMsg(models.Model):
     background_pic = models.ImageField(u'个人中心背景', upload_to=photo_path, blank=True)
 
     watching = models.ManyToManyField(PostBars, verbose_name='关注的吧', through='UserWatching')
-    collections = models.ManyToManyField(Post, verbose_name='收藏的帖子', related_name='user_collection')
-    interest = models.ManyToManyField(Tags, verbose_name='兴趣')
+    collections = models.ManyToManyField(Post, verbose_name='收藏的帖子', related_name='user_collection', blank=True)
+    interest = models.ManyToManyField(Tags, verbose_name='兴趣', blank=True)
     follow = models.ManyToManyField(UserAll, verbose_name='关注', through='UserFollow')
     praise = models.ManyToManyField(Post, verbose_name="点赞的帖子", blank=True, through='UserPraise', related_name='user_praise')
 

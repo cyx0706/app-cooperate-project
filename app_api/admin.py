@@ -27,6 +27,12 @@ class UserAdmin(admin.ModelAdmin):
         ('status', admin.BooleanFieldListFilter),
     )
 
+    def get_fields(self, request, obj=None):
+        if obj:
+            return ['username', 'email', 'avatar', 'status']
+        else:
+            return ['username', 'email', 'avatar', 'status', 'password']
+
     def block_user(self, request, queryset):
         row_updated = queryset.update(status=False)
         message_bit = "屏蔽了%s个用户" % row_updated
@@ -117,7 +123,7 @@ class PostFloorAdmin(admin.ModelAdmin):
     inlines = [FloorCommentInline,]
 
     def get_readonly_fields(self, request, obj=None):
-        if not obj:
+        if obj:
             return self.readonly_fields
         else:
             self.readonly_fields = ['floor_number', 'post']

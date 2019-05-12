@@ -15,9 +15,9 @@ urlpatterns = [
     url(r'posts$', views.home_api, name='posts'),
     url(r'search$', views.search_api),
     url(r'praise$', views.praise_api),
-    url(r'post/(?P<post_id>\w+)/detail', views.post_msg_api),
-    url(r'post/(?P<post_id>\w+)/comment', views.floor_msg_api),
-    url(r'user/(?P<user_id>\w+)/', include([
+    url(r'post/(?P<post_id>\d+)/detail', views.post_msg_api),
+    url(r'post/(?P<post_id>\d+)/comment', views.floor_msg_api),
+    url(r'user/(?P<user_id>\d+)/', include([
         url(r'floor_comment-info', views.floor_comment_info_api),
         url(r'comment-info', views.comment_info_api),
         url(r'comment$', views.delete_comment_api),

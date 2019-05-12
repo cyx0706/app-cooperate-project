@@ -15,6 +15,7 @@ import threading
 
 from app_api.DFA_Filter import DFAFilter
 
+
 def test_session(request):
     if request.method == 'GET':
         request.session['test'] = 'test'
@@ -24,6 +25,7 @@ def test_session(request):
             return JsonResponse({'status': True})
         else:
             return JsonResponse({'status': False})
+
 
 def test_delete(request):
     if request.method == 'DELETE':
@@ -97,7 +99,7 @@ class UserClass():
         return None
 
     def check_name(self, name):
-        if re.match(r'^\w+$', name):
+        if name and re.match(r'^\w+$', name):
             return True
         else:
             return False
@@ -324,6 +326,8 @@ def register_api(request):
             birthday = request.POST.get('birthday')
             description = request.POST.get('description')
             gender = request.POST.get('gender', 2)
+            if not gender is int:
+                return JsonResponse({'status': False, 'msg': "性别格式错误"})
             new_user = UserClassForProject(name=username)
 
             if not re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
@@ -1103,21 +1107,17 @@ def home_api(request):
             'post_msg': post_msg,
         })
 
-
     if request.method == 'POST':
         user_id = request.POST.get('user_id', 0)
         bar_id = request.POST.get('bar_id', 0)
         title = request.POST.get('title')
         content = request.POST.get('content')
         pics = request.FILES.getlist('pic')
-        print(user_id)
-        print(bar_id)
-        print(title)
-        print(content)
-        print(pics)
         if not request.session.get('id', None) != int(user_id):
             return JsonResponse({'status': False, 'msg': "无权限"})
         else:
+            if not PostBars.objects.filter(bar_id=bar_id):
+                return JsonResponse({'status': False, 'msg': "帖子不存在"})
             # 多线程写入图片
             new_post = Post(writer_id=user_id, bar_id=bar_id, title=title, content=content)
             new_post.save()

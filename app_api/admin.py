@@ -27,6 +27,9 @@ class UserAdmin(admin.ModelAdmin):
         ('status', admin.BooleanFieldListFilter),
     )
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
     def get_fields(self, request, obj=None):
         if obj:
             return ['username', 'email', 'avatar', 'status']

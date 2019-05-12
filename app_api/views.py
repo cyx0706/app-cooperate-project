@@ -11,6 +11,9 @@ import json
 import re
 import hashlib
 import random
+import threading
+
+from app_api.DFA_Filter import DFAFilter
 
 def test_session(request):
     if request.method == 'GET':
@@ -36,6 +39,19 @@ def test_delete(request):
                                  'tips': "确保你的表单字段里的key是name"})
     else:
         return JsonResponse({'status': False, 'msg': "请使用delete请求!"})
+
+
+def test_sensitive_word(request):
+    gfw = DFAFilter()
+    path = settings.BASE_DIR.replace('\\','/') + "/app_api/sensitive_words.txt"
+    print(path)
+    gfw.io_parse(path)
+    gfw.database_parse()
+    text = "你真是个大傻逼，大傻子，傻大个，大坏蛋，坏人。"
+    result = gfw.filter(text)
+    print(text)
+    print(result)
+    return JsonResponse({})
 
 
 def test_list(request):
@@ -200,6 +216,7 @@ def login_api(request):
     user_obj = user.login(password)
     if user_obj:
         request.session['id'] = user_obj.id
+        request.session.set_expiry(60*60)
         return JsonResponse({'status': True, 'msg': "登录成功",
                              'avatar': user_obj.avatar.url,
                              'user_id': user_obj.id,
@@ -690,6 +707,7 @@ def personal_center_api(request, user_id):
                 'concern_number': user.user_msg.follow.count(),
                 'watched_bar_number': user.user_msg.watching.count(),
                 'background_pic': user.user_msg.background_pic.url,
+                'interests': [x.type for x in user.user_msg.interest.all()]
             })
         # 修改个人信息
         if request.method == 'POST':
@@ -837,8 +855,11 @@ def floor_msg_api(request, post_id):
                 return JsonResponse({'status': False, 'msg': "无权限"})
             reply_id = int(request.POST.get('reply_id'))
             reply_floor = request.POST.get('reply_floor')
-            # 待加入敏感词过滤
+            # 敏感词过滤
+            gfw = DFAFilter()
+            gfw.database_parse()
             content = request.POST.get('content')
+            content = gfw.filter(content)
             if FloorComments.objects.filter(id=reply_id) or reply_id == 0:
                 floor = PostFloor.objects.filter(post=post, floor_number=reply_floor)
                 if floor:
@@ -977,6 +998,7 @@ def post_msg_api(request, post_id):
             'post_msg': post_msg,
         })
 
+
 @login_required
 def praise_api(request):
 
@@ -1002,7 +1024,20 @@ def praise_api(request):
         return JsonResponse({'status': True})
 
 
-@login_required
+class PicThread(threading.Thread):
+    def __init__(self, name, pic, post_id):
+        self.pic = pic
+        self.post_id = post_id
+        super(PicThread, self).__init__(name=name)
+
+    def run(self) -> None:
+        print(threading.current_thread().name, "is running to save a pic")
+        try:
+            PostPhotos.objects.create(post_id=self.post_id, pic=self.pic)
+        except Exception as e:
+            print(e)
+
+
 def home_api(request):
 
     if request.method == 'GET':
@@ -1065,20 +1100,31 @@ def home_api(request):
 
 
     if request.method == 'POST':
+        print(request.POST)
         user_id = request.POST.get('user_id', 0)
         bar_id = request.POST.get('bar_id', 0)
         title = request.POST.get('title')
         content = request.POST.get('content')
         pics = request.FILES.getlist('pic')
-        if not request.session.get('id', None) != int(user_id):
+        if not request.session.get('id', None) == int(user_id):
             return JsonResponse({'status': False, 'msg': "无权限"})
         else:
-            # 开个线程写入图片
+            # 多线程写入图片
             new_post = Post(writer_id=user_id, bar_id=bar_id, title=title, content=content)
             new_post.save()
             post_id = new_post.id
+            thread_lists = []
+            i = 0
             for pic in pics:
-                PostPhotos.objects.create(post_id=post_id, pic=pic)
+                i+=1
+                t = PicThread(name='Thread_{}'.format(i), post_id=post_id, pic=pic)
+                thread_lists.append(t)
+            for t in thread_lists:
+                t.setDaemon(True)
+                t.start()
+            # 都开始再同步
+            for t in thread_lists:
+                t.join()
             return JsonResponse({'status': True})
 
     if request.method == 'DELETE':

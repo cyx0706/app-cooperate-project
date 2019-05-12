@@ -58,7 +58,7 @@ class TagsAdmin(admin.ModelAdmin):
                 self.message_user(request, "{}类型已经有贴吧在使用".format(str(i.type)))
                 return
         row_updated = queryset.delete()
-        message_bit = "删除了%s个类型" % row_updated
+        message_bit = "删除了%s个类型" % list(row_updated)[0]
         self.message_user(request, message_bit)
     delete_tag.short_description = "删除标签"
 
@@ -187,3 +187,18 @@ class UserPraiseAdmin(admin.ModelAdmin):
 @admin.register(UserFollow)
 class UserFollowAdmin(admin.ModelAdmin):
     list_per_page = 10
+
+
+@admin.register(SensitiveWord)
+class SensitiveWordAdmin(admin.ModelAdmin):
+    list_per_page = 20
+    list_display_links = None
+    actions = ['delete_words',]
+    list_display = ['word']
+
+    def delete_words(self, request, queryset):
+        row_updated = queryset.delete()
+        message_bit = "删除了%s个敏感词" % list(row_updated)[0]
+        self.message_user(request, message_bit)
+    delete_words.short_description = "删除敏感词"
+

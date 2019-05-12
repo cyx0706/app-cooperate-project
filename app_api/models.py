@@ -91,7 +91,6 @@ class Post(models.Model):
             super(Post, self).save(*args, **kwargs)
         # 生成楼层对应1楼
         else:
-            print(self)
             bar = self.bar
             bar.bar_number += 1
             bar.save()
@@ -276,6 +275,17 @@ class UserWatching(models.Model):
     time = models.DateTimeField(u'时间', default=timezone.now)
     read_status = models.BooleanField(u'消息已读状态', default=False)
     display_status = models.BooleanField(u'消息展示状态', default=True)
+
+
+class SensitiveWord(models.Model):
+    word = models.CharField(u'敏感词', max_length=40)
+
+    class Meta:
+        verbose_name_plural = "敏感词"
+        verbose_name = verbose_name_plural
+
+    def __str__(self):
+        return self.word
 
 
 

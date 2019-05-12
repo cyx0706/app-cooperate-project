@@ -5,6 +5,14 @@
     <title>Title</title>
 </head>
 <body>
-<img src="/media/no-picture.jpg" alt="">
+<form action="{% url 'posts' %}" method="post" enctype="multipart/form-data">
+    <input type="file" name="pic" value="1">
+    <input type="file" name="pic" value="2">
+    <input type="text" name="user_id" value="3">
+    <input type="text" name="bar_id" value="4">
+    <input type="text" name="title" value="5">
+    <input type="text" name="content" value="6">
+    <input type="submit">
+</form>
 </body>
 </html>

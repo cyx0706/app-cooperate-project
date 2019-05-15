@@ -8,10 +8,14 @@ def test(request):
     return render(request, 'test.html')
 
 
+def learn4_1(request):
+    return render(request, '4-1learn.html')
+
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^mytieba.api/', include('app_api.urls')),
-    url(r'^test/', test)
+    url(r'^postbar/admin/', admin.site.urls),
+    url(r'^postbar/mytieba.api/', include('app_api.urls')),
+    url(r'^postbar/test/', test),
+    url(r'^postbar/learn/', learn4_1)
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
   + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

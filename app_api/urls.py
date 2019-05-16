@@ -13,6 +13,7 @@ urlpatterns = [
     url(r'login', views.login_api),
     url(r'find-back', views.find_pwd_api),
     url(r'posts$', views.home_api, name='posts'),
+    url(r'postbar$', views.post_bar_api),
     url(r'search$', views.search_api),
     url(r'praise$', views.praise_api),
     url(r'post/(?P<post_id>\d+)/detail', views.post_msg_api),

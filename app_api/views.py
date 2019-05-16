@@ -268,6 +268,7 @@ def find_pwd_api(request):
             body = "你的验证码是:{}".format(code)
             request.session['code1'] = code
             request.session['temp_id'] = user.id
+            request.session.set_expiry(5*60)
             send_mail(subject=title, message=body, recipient_list=[email], from_email=settings.EMAIL_HOST_USER)
             return JsonResponse({'status': True, 'msg': "发送邮件成功"})
 
@@ -693,7 +694,6 @@ def user_collection_api(request, user_id):
         return JsonResponse({'status': True})
 
 
-@cache_page(60*5)
 @login_required
 def personal_center_api(request, user_id):
     try:
@@ -726,7 +726,7 @@ def personal_center_api(request, user_id):
         if request.method == 'POST':
             username = request.POST.get('username', None)
             description = request.POST.get('description', None)
-            gender = int(request.POST.get('gender', 2))
+            gender = request.POST.get('gender')
             birthday = request.POST.get('birthday', None)
             interests = request.POST.getlist('interests', None)
             if UserAll.objects.exclude(id=user_id).filter(username=username):
@@ -736,7 +736,12 @@ def personal_center_api(request, user_id):
                     user.username = username
             if description:
                 user.user_msg.description = description
-            if gender and gender in [0, 1, 2]:
+            try:
+                gender = int(gender)
+            except Exception as e:
+                print(e)
+                return JsonResponse({'status': False, 'msg': "性别格式错误"})
+            if gender in [0, 1, 2]:
                 user.user_msg.gender = gender
             if birthday and re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
                 user.user_msg.birthday = birthday
@@ -764,6 +769,7 @@ def pwd_reset(request, user_id):
         return JsonResponse({'status': True})
     else:
         return JsonResponse({'status': False, 'msg': "原密码错误"})
+
 
 @login_required
 def upload_photo(request):
@@ -1156,6 +1162,61 @@ def home_api(request):
                 FloorComments.objects.filter(reply__post_id=post_id).update(display_status=False)
                 post.save()
                 return JsonResponse({'status': True})
+
+
+def post_bar_api(request):
+    user_id = request.session.get('id', 0)
+    if request.GET.get('bar_id'):
+        bar_id = request.GET.get('bar_id')
+        try:
+            bar = PostBars.objects.get(id=bar_id)
+        except PostBars.DoesNotExist as e:
+            print(e)
+            return JsonResponse({'status': False, 'msg': "id不存在"})
+        else:
+            post_info = []
+            posts = Post.objects.filter(bar_id=bar_id).select_related('writer')
+            for i in posts:
+                post_info.append({
+                    'writer_id': i.writer_id,
+                    'writer_avatar': i.writer.avatar,
+                    'writer_name': i.writer.username,
+                    'post_content': i.content,
+                    'post_pic': [x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)],
+                    'comment_number': FloorComments.objects.filter(reply__post_id=i.id).count(),
+                    'praise_number': UserPraise.objects.filter(post_id=i.id).count(),
+                    'time': str(i.create_time),
+                })
+            return JsonResponse({
+                'status': True,
+                'bar_id': bar.id,
+                'name': bar.name,
+                'icon': bar.photo.url,
+                'post_number': bar.bar_number,
+                'description': bar.short_description,
+                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar_id))
+            })
+    elif request.GET.get('bar_tag'):
+        bar_info = []
+        bar_tag = request.GET.get('bar_tag')
+        bars = PostBars.objects.filter(feature__type__contains=bar_tag)
+        for bar in bars:
+            bar_info.append({
+                'bar_id': bar.id,
+                'name': bar.name,
+                'icon': bar.photo.url,
+                'post_number': bar.bar_number,
+                'description': bar.short_description,
+                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar.id))
+            })
+        return JsonResponse({
+            'status': True,
+            'search_tag': bar_tag,
+            'number': bars.count(),
+            'bar_info': bar_info,
+        })
+    else:
+        return JsonResponse({'status': False, 'msg':"请至少带上bar_id和bar_tag中的一个"})
 
 
 

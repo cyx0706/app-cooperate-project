@@ -243,7 +243,7 @@ def email_api(request):
         t.start()
         return JsonResponse({'status': True, 'msg': "发送邮件成功"})
     else:
-        return JsonResponse({'status': False})
+        return JsonResponse({'status': False, 'msg': "邮箱格式错误"})
 
 
 def find_pwd_api(request):
@@ -326,12 +326,16 @@ def register_api(request):
             birthday = request.POST.get('birthday')
             description = request.POST.get('description')
             gender = request.POST.get('gender', 2)
-            if not gender is int:
+            try:
+                gender = int(gender)
+            except Exception as e:
+                print(e)
+                return JsonResponse({'status': False, 'msg': "性别格式错误"})
+            if not gender in [0, 1, 2]:
                 return JsonResponse({'status': False, 'msg': "性别格式错误"})
             new_user = UserClassForProject(name=username)
 
-            if not re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
-                print(birthday)
+            if not (birthday and re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday)):
                 return JsonResponse({'status': False, 'msg': "生日格式错误"})
 
             if UserAll.objects.filter(email=email):

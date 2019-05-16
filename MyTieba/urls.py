@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.shortcuts import render, HttpResponse
 
 def test(request):
-    return render(request, 'test.html')
+    return render(request, '2.html')
 
 
 def learn4_1(request):

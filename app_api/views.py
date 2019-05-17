@@ -1192,6 +1192,7 @@ def post_bar_api(request):
                 'bar_id': bar.id,
                 'name': bar.name,
                 'icon': bar.photo.url,
+                'watcher_number': UserWatching.objects.filter(bar_id=bar.id).count(),
                 'post_number': bar.bar_number,
                 'description': bar.short_description,
                 'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar_id))

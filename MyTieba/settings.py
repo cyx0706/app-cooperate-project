@@ -116,7 +116,7 @@ USE_TZ = False
 
 # APPEND_SLASH = False
 
-STATIC_URL = '/static/'
+STATIC_URL = '/static1/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static1/').replace('\\', '/')
 STATICFILES_DIRS = (
        os.path.join(BASE_DIR,'static/').replace('\\','/'),

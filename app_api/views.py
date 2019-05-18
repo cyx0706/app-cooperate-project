@@ -1195,7 +1195,8 @@ def post_bar_api(request):
                 'watcher_number': UserWatching.objects.filter(bar_id=bar.id).count(),
                 'post_number': bar.bar_number,
                 'description': bar.short_description,
-                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar_id))
+                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar_id)),
+                'post_info': post_info,
             })
     elif request.GET.get('bar_tag'):
         bar_info = []

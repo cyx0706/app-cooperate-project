@@ -1182,7 +1182,7 @@ def post_bar_api(request):
                     'writer_avatar': i.writer.avatar,
                     'writer_name': i.writer.username,
                     'post_content': i.content,
-                    'post_pic': [x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)],
+                    'post_pic': [x.url for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)],
                     'comment_number': FloorComments.objects.filter(reply__post_id=i.id).count(),
                     'praise_number': UserPraise.objects.filter(post_id=i.id).count(),
                     'time': str(i.create_time),

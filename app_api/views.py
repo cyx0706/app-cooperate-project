@@ -1056,7 +1056,7 @@ class PicThread(threading.Thread):
         except Exception as e:
             print(e)
 
-
+@login_required
 def home_api(request):
 
     if request.method == 'GET':
@@ -1088,7 +1088,6 @@ def home_api(request):
             current_page = paginator.page(1)
             limited_posts = current_page.object_list
         for i in limited_posts:
-            print(i)
             pics = list(PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True))
             if len(pics) > 3:
                 pics = PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)[2]

@@ -18,7 +18,7 @@ urlpatterns = [
     url(r'praise$', views.praise_api),
     url(r'post/(?P<post_id>\d+)/detail', views.post_msg_api),
     url(r'post/(?P<post_id>\d+)/comment', views.floor_msg_api),
-    url(r'upload/photo', views.upload_photo),
+    url(r'upload/photo$', views.upload_photo),
     url(r'user/(?P<user_id>\d+)/', include([
         url(r'floor_comment-info', views.floor_comment_info_api),
         url(r'comment-info', views.comment_info_api),

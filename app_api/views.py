@@ -1072,13 +1072,11 @@ class PicThread(threading.Thread):
 def home_api(request):
 
     if request.method == 'GET':
-        flag = True
         post_msg = []
         user_id = request.GET.get('user')
         page = request.GET.get('page', 1)
         if user_id:
             posts = Post.objects.filter(writer_id=user_id)
-            flag = False
         else:
             person_id = request.session.get('id')
             person = UserAll.objects.get(id=person_id)
@@ -1112,13 +1110,11 @@ def home_api(request):
                 'bar_id': i.bar_id,
                 'bar_name': i.bar.name,
                 'bar_tags': list(i.bar.feature.values_list('type', flat=True)),
+                'writer_id':i.writer_id,
+                'writer_name':i.writer.username,
+                'writer_avatar': i.writer.avatar.url,
             }
-            if flag:
-                info['writer_id'] = i.writer_id,
-                info['writer_name'] = i.writer.username,
-                info['writer_avatar'] = i.writer.avatar.url,
             post_msg.append(info)
-
         return JsonResponse({
             'number': len(posts),
             'page': current_page.number,

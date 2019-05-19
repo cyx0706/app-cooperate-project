@@ -358,7 +358,12 @@ def register_api(request):
 
 def logout_api(request):
     if request.method == 'POST':
-        if int(request.session.get('id')) == int(request.POST.get('id')):
+        try:
+            id = int(request.POST.get('id', 0))
+        except Exception as e:
+            print(e)
+            return JsonResponse({'status': False, 'msg': "id格式错误"})
+        if int(request.session.get('id')) == id:
             request.session.delete('id')
             return JsonResponse({'status': True, 'msg': "退出登录成功"})
         else:
@@ -382,6 +387,7 @@ def floor_comment_info_api(request, user_id):
             'writer_name': floor.user.username,
             'writer_avatar': floor.user.avatar.url,
             'read_status': floor.read_status,
+            'time': str(floor.create_time),
         })
     post_floor.update(read_status=True)
     return JsonResponse({
@@ -776,8 +782,11 @@ def pwd_reset(request, user_id):
 
 @login_required
 def upload_photo(request):
-    user_id = request.POST.get('user_id')
-    if int(request.session.get('id')) != int(user_id):
+    try:
+        user_id = int(request.POST.get('user_id'))
+    except Exception as e:
+        return JsonResponse({'status': False, 'msg': "id格式错误"})
+    if int(request.session.get('id')) != user_id:
         return JsonResponse({'status': False, 'msg': "无权限"})
     type = request.POST.get('type')
     user = UserClassForProject(id=user_id)
@@ -1072,7 +1081,6 @@ def home_api(request):
             flag = True
         else:
             person_id = request.session.get('id')
-            print(person_id)
             person = UserAll.objects.get(id=person_id)
             interests = person.user_msg.interest.all()
             posts1 = Post.objects.filter(bar__feature__in=interests, display_status=True)
@@ -1092,9 +1100,9 @@ def home_api(request):
             current_page = paginator.page(1)
             limited_posts = current_page.object_list
         for i in limited_posts:
-            pics = list(PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True))
+            pics = ["/media/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)]
             if len(pics) > 3:
-                pics = ["/media/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)[2]]
+                pics = pics[0:2]
             post_msg.append({
                 'post_id': i.id,
                 'post_pic': pics,

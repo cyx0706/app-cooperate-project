@@ -183,7 +183,7 @@ class UserClassForProject(UserClass):
 
     def upload_background(self, request):
         user = UserAll.objects.get(id=self.id)
-        pic = request.FILE.get('pic')
+        pic = request.FILES.get('pic')
         suffix = os.path.splitext(pic.name)[1]
         if not suffix:
             return False

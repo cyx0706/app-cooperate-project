@@ -152,6 +152,8 @@ class UserClass():
             return False
 
 
+
+
 class UserClassForProject(UserClass):
 
     def __init__(self, id=0, name=None):
@@ -192,7 +194,7 @@ class UserClassForProject(UserClass):
                 return False
             else:
                 user.user_msg.background_pic = pic
-                user.save()
+                user.user_msg.save()
                 return True
         return False
 
@@ -217,7 +219,6 @@ def login_api(request):
         return JsonResponse({'status': False, 'msg': "请使用post请求"})
     name = request.POST.get('username')
     password = request.POST.get('password')
-    print(name, password)
     user = UserClass(name=name)
     user_obj = user.login(password)
     if user_obj:
@@ -780,15 +781,15 @@ def pwd_reset(request, user_id):
         return JsonResponse({'status': False, 'msg': "原密码错误"})
 
 
-@login_required
+# @login_required
 def upload_photo(request):
     try:
         user_id = int(request.POST.get('user_id'))
     except Exception as e:
         print(e)
         return JsonResponse({'status': False, 'msg': "id格式错误"})
-    if int(request.session.get('id')) != user_id:
-        return JsonResponse({'status': False, 'msg': "无权限"})
+    # if int(request.session.get('id')) != user_id:
+    #     return JsonResponse({'status': False, 'msg': "无权限"})
     type = request.POST.get('type')
     user = UserClassForProject(id=user_id)
     if not user.check_user():
@@ -796,12 +797,14 @@ def upload_photo(request):
     else:
         if type == 'avatar':
             if user.upload_avatar(request):
-                return JsonResponse({'status': True})
+                url = UserAll.objects.get(id=user_id).avatar.url
+                return JsonResponse({'status': True, 'pic': url})
             else:
                 return JsonResponse({'status': False, 'msg': "图片格式错误或太大了"})
         elif type == 'background':
             if user.upload_background(request):
-                return JsonResponse({'status': True})
+                url = UserDetailMsg.objects.get(user_id=user_id).background_pic.url
+                return JsonResponse({'status': True, 'pic': url})
             else:
                 return JsonResponse({'status': False, 'msg': "图片格式错误或太大了"})
         else:

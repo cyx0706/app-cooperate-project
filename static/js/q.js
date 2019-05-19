@@ -3,6 +3,7 @@ var PI = Math.PI;
 let mouseMove = false;
 var borderX = 0;
 var clickX = 0;
+var offX = 0;
 function draw(ctx, x, y, r, l, operation, option) {
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -52,6 +53,7 @@ function createSlider(container){
     sliderText.innerHTML = "向右滑动填充拼图";
     sliderContainer.appendChild(sliderText);
     borderX = sliderContainer.offsetLeft;
+
     slider.addEventListener('mousedown', dragSlider);
     slider.addEventListener('mouseup', checkSlider);
     sliderContainer.addEventListener('mousemove',moveSlider);
@@ -84,8 +86,29 @@ function moveSlider(event) {
 }
 
 function checkSlider() {
-    console.log("There need a check!");
     mouseMove = false;
+    var left = $('#blockCanvas').offset().left;
+    if (Math.abs(left-offX-170) < 5){
+        console.log('success!');
+        $('.sliderContainer').removeClass('sliderContainer_active');
+        $('.sliderContainer').addClass('sliderContainer_success');
+    }
+    else {
+        console.log('false!');
+        $('.sliderContainer').removeClass('sliderContainer_active');
+        $('.sliderContainer').addClass('sliderContainer_fail');
+        alert("222");
+        // $('.sliderContainer').removeClass('sliderContainer_fail');
+        // $('.sliderContainer').addClass('sliderContainer_active');
+        $('#blockCanvas').animate({left: -70}, 1000);
+        $('#shadowCanvas').animate({left: -70}, 1000);
+        $('.sliderMask').animate({width: 0}, 1000);
+        $('.slider').animate({left: 0}, 1000);
+        $('.sliderContainer').removeClass('sliderContainer_fail');
+
+
+    }
+
 }
 
 $(function () {
@@ -98,6 +121,17 @@ $(function () {
   h = 116;
       // canvas高度
     captcha = document.getElementById('sliderCaptcha');
+    var captchaPic = document.createElement('div');
+    captchaPic.id = 'captchaPic';
+    captcha.appendChild(captchaPic);
+    var tips = document.createElement('p');
+    tips.id = "tips";
+    var restart = document.createElement('i');
+    var colored_text = document.createElement('span');
+    var text = document.createElement('span');
+    tips.appendChild(restart);
+    tips.appendChild(colored_text);
+    tips.appendChild(text);
     var pic_canvas = document.createElement('canvas');
     pic_canvas.id = 'picCanvas';
     var block_canvas = document.createElement('canvas');
@@ -105,9 +139,10 @@ $(function () {
     var L = l + r * 2 + 3; // 滑块实际边长
     var shadow_canvas = document.createElement('canvas');
     shadow_canvas.id = 'shadowCanvas';
-    captcha.appendChild(pic_canvas);
-    captcha.appendChild(shadow_canvas);
-    captcha.appendChild(block_canvas);
+    captchaPic.appendChild(pic_canvas);
+    captchaPic.appendChild(shadow_canvas);
+    captchaPic.appendChild(block_canvas);
+    captchaPic.appendChild(tips);
     var context = pic_canvas.getContext('2d');
     var context3 = shadow_canvas.getContext('2d');
     var context2 = block_canvas.getContext('2d');
@@ -129,7 +164,9 @@ $(function () {
     // shadowPuzzle(context3, 120, 100, 170, 150)
     draw(context, 170, 50, r,L,'fill', 'overlay');
     sha(context3,170, 50, r,L,'clip', 'destination-over');
+    offX = $('#blockCanvas').offset().left;
     createSlider(captcha);
+
 
 });
 

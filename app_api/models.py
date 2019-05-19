@@ -288,6 +288,9 @@ class UserFollow(models.Model):
     info_status = models.BooleanField(u'消息展示状态', default=True)
     display_status = models.BooleanField(u'展示状态', default=True)
 
+    def get_description(self):
+        return "{}关注{}".format(self.user.user.username, self.follower.username)
+
     class Meta:
         verbose_name_plural = "用户关注的人"
         verbose_name = verbose_name_plural

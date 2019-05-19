@@ -251,7 +251,7 @@ class UserPraiseAdmin(admin.ModelAdmin):
 @admin.register(UserFollow)
 class UserFollowAdmin(admin.ModelAdmin):
     list_per_page = 10
-    list_display = ['id', 'display_status']
+    list_display = ['id', 'display_status', 'get_description']
     list_filter = (
         ('display_status', admin.BooleanFieldListFilter),
     )

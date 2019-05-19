@@ -153,7 +153,6 @@ class UserClass():
 
 
 
-
 class UserClassForProject(UserClass):
 
     def __init__(self, id=0, name=None):
@@ -340,8 +339,9 @@ def register_api(request):
                 return JsonResponse({'status': False, 'msg': "性别格式错误"})
             new_user = UserClassForProject(name=username)
 
-            if not (birthday and re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday)):
-                return JsonResponse({'status': False, 'msg': "生日格式错误"})
+            if birthday:
+                if not re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
+                    return JsonResponse({'status': False, 'msg': "生日格式错误"})
 
             if UserAll.objects.filter(email=email):
                 return JsonResponse({'status': False, 'msg': "邮箱已经存在", 'error_code': 3})

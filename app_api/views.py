@@ -781,15 +781,15 @@ def pwd_reset(request, user_id):
         return JsonResponse({'status': False, 'msg': "原密码错误"})
 
 
-# @login_required
+@login_required
 def upload_photo(request):
     try:
         user_id = int(request.POST.get('user_id'))
     except Exception as e:
         print(e)
         return JsonResponse({'status': False, 'msg': "id格式错误"})
-    # if int(request.session.get('id')) != user_id:
-    #     return JsonResponse({'status': False, 'msg': "无权限"})
+    if int(request.session.get('id')) != user_id:
+        return JsonResponse({'status': False, 'msg': "无权限"})
     type = request.POST.get('type')
     user = UserClassForProject(id=user_id)
     if not user.check_user():
@@ -915,7 +915,7 @@ def floor_msg_api(request, post_id):
                 else:
                     comment_msg = []
                     post_floor = post_floor[0]
-                    comments = FloorComments.objects.select_related('user').filter(Q(reply_id=post_floor.id) & Q(display_status=True))
+                    comments = FloorComments.objects.select_related('user').filter(Q(reply_id=post_floor.id) & Q(status=True))
                     for comment in comments:
                         if bool(comment.replied_comment):
                             temp = FloorComments.objects.get(id=comment.replied_comment)
@@ -962,7 +962,7 @@ def floor_msg_api(request, post_id):
                     limited_floors = current_page.object_list
                 for i in limited_floors:
                     comment_msg = []
-                    comments = FloorComments.objects.select_related('user').filter(Q(reply_id=i.id) & Q(display_status=True))[0:2]
+                    comments = FloorComments.objects.select_related('user').filter(Q(reply_id=i.id) & Q(status=True))[0:2]
                     comments_len = comments.count()
                     if comments:
                         for comment in comments:
@@ -1039,7 +1039,12 @@ def praise_api(request):
 
     if request.method == 'DELETE':
         user_id = request.DELETE.get('user_id')
-        if int(user_id) != request.session.get('id'):
+        try:
+            user_id = int(user_id)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'status': False, 'msg': "格式错误"})
+        if user_id != request.session.get('id'):
             return JsonResponse({'status': False, 'msg': "无权限"})
         post_id = request.DELETE.get('post_id')
         temp = UserPraise.objects.filter(Q(post_id=post_id)& Q(user__user_id=user_id)).update(display_status=False)
@@ -1175,8 +1180,9 @@ def home_api(request):
                 return JsonResponse({'status': True})
 
 
+@login_required
 def post_bar_api(request):
-    user_id = request.session.get('id', 0)
+    user_id = request.session.get('id')
     if request.GET.get('bar_id'):
         bar_id = request.GET.get('bar_id')
         try:

@@ -9,23 +9,38 @@ import random
 admin.site.disable_action('delete_selected')
 
 
-class UserEXInfo(admin.StackedInline):
-    model = UserDetailMsg
-    fk_name = 'user'
+# class UserEXInfo(admin.StackedInline):
+#     model = UserDetailMsg
+#     fk_name = 'user'
+#
+#     verbose_name_plural = "详细个人信息"
+#     verbose_name = verbose_name_plural
+
+@admin.register(UserDetailMsg)
+class UserExAdmin(admin.ModelAdmin):
+    list_per_page = 10
+    list_display = ['get_username', 'gender', 'get_user_id']
     filter_horizontal = ('collections', 'interest')
+    readonly_fields = ['user']
 
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 @admin.register(UserAll)
 class UserAdmin(admin.ModelAdmin):
 
     list_per_page = 5
     list_display = ['id', 'username', 'email', 'get_avatar', 'status']
-    inlines = [UserEXInfo]
+    # inlines = [UserEXInfo]
     search_fields = ['username', 'email']
     list_filter = (
         ('status', admin.BooleanFieldListFilter),
     )
+    form = forms.UserForm
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -36,6 +51,18 @@ class UserAdmin(admin.ModelAdmin):
         else:
             return ['username', 'email', 'avatar', 'status', 'password']
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['username']
+        else:
+            return []
+
+    # def get_inline_formsets(self, request, formsets, inline_instances, obj=None):
+    #     if obj:
+    #         return [UserEXInfo]
+    #     else:
+    #         return []
+
     def block_user(self, request, queryset):
         row_updated = queryset.update(status=False)
         message_bit = "屏蔽了%s个用户" % row_updated
@@ -44,10 +71,17 @@ class UserAdmin(admin.ModelAdmin):
     actions = [block_user]
 
     def save_model(self, request, obj, form, change):
-        obj.password = hashlib.sha1(obj.password.encode('utf-8')).hexdigest()
+        if not form.is_valid():
+            pass
+        if not change:
+            obj.password = hashlib.sha1(form.cleaned_data.get('password').encode('utf-8')).hexdigest()
+            obj.username = form.cleaned_data.get('username')
         super().save_model(request, obj, form, change)
-        if not UserDetailMsg.objects.filter(user_id=obj.id):
-            UserDetailMsg.objects.create(user=obj)
+        if not change:
+            user = UserAll.objects.get(username=obj.username)
+            UserDetailMsg.objects.create(user=user)
+
+
 
 
 @admin.register(Tags)

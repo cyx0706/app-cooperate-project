@@ -37,7 +37,26 @@ class CommentForm(forms.ModelForm):
         comment = self.cleaned_data['reply'] # 回复的楼层
         if int(reply_id) != 0:
             floor_comment = FloorComments.objects.get(id=reply_id)
-            print(floor_comment.reply)
             if floor_comment.reply != comment:
                 raise forms.ValidationError("请保持回复的楼层一致")
         return reply_id
+
+
+class UserForm(forms.ModelForm):
+
+    class Meta:
+        model = UserAll
+        fields = '__all__'
+        error_messages = {
+            'email': {'invalid': "格式错误"},
+            'username': {'max_length': "过长", 'required': "不能为空"},
+            'password': {'max_length': "过长", 'required': "不能为空"},
+        }
+
+
+    def clean_username(self):
+        raw_name = self.cleaned_data['username']
+        if UserAll.objects.filter(username=raw_name):
+            raise forms.ValidationError("用户名不能重复")
+        else:
+            return raw_name

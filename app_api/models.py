@@ -44,6 +44,7 @@ class PostBars(models.Model):
             return mark_safe("<img src='{}' width=75px height=75px></img>".format(url))
         else:
             return "暂无图片"
+    get_pic.short_description = "吧图片"
 
     def get_master(self):
         return self.master.username
@@ -229,10 +230,10 @@ class UserDetailMsg(models.Model):
         (1, "女"),
         (2, "保密")
     )
-    user = models.OneToOneField('UserAll', verbose_name='用户id', related_name='user_msg')
+    user = models.OneToOneField('UserAll', verbose_name='用户', related_name='user_msg')
     birthday = models.DateField(u'生日', blank=True, null=True)
-    gender = models.IntegerField(u'性别', choices=GENDER_CHOICE, blank=True, default=2)
-    description = models.TextField(u'个人简介', blank=True)
+    gender = models.IntegerField(u'性别', choices=GENDER_CHOICE, default=2)
+    description = models.TextField(u'个人简介', blank=False)
     background_pic = models.ImageField(u'个人中心背景', upload_to=photo_path, blank=True, default='back_default.jpg')
 
     watching = models.ManyToManyField(PostBars, verbose_name='关注的吧', through='UserWatching')
@@ -243,6 +244,18 @@ class UserDetailMsg(models.Model):
 
     def __str__(self):
         return self.user.username
+
+    def get_username(self):
+        return self.user.username
+    get_username.short_description = "用户名"
+
+    def get_user_id(self):
+        return self.user.id
+    get_user_id.short_description = "用户id"
+
+    class Meta:
+        verbose_name_plural = "用户详细个人信息"
+        verbose_name = verbose_name_plural
 
 
 class UserPraise(models.Model):

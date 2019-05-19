@@ -256,6 +256,22 @@ class UserFollowAdmin(admin.ModelAdmin):
         ('display_status', admin.BooleanFieldListFilter),
     )
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['mutual_following']
+        else:
+            return []
+
+    def save_model(self, request, obj, form, change):
+        user = form.cleaned_data['user']
+        follower = form.cleaned_data['follower']
+        follow = UserFollow.objects.filter(user__user=follower, follower=user.user, display_status=True)
+        if follow:
+            follow.update(mutual_following=True)
+        obj.mutual_following = True
+        super().save_model(request, obj, form, change)
+
+
 
 @admin.register(SensitiveWord)
 class SensitiveWordAdmin(admin.ModelAdmin):

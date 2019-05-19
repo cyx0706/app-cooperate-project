@@ -132,7 +132,7 @@ class PostFloor(models.Model):
 
     def get_post(self):
         return self.post.title
-    get_post.short_description = "所属吧"
+    get_post.short_description = "所属帖子"
 
     def get_user(self):
         return self.user.username

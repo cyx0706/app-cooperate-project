@@ -263,12 +263,17 @@ class UserFollowAdmin(admin.ModelAdmin):
             return []
 
     def save_model(self, request, obj, form, change):
-        user = form.cleaned_data['user']
-        follower = form.cleaned_data['follower']
-        follow = UserFollow.objects.filter(user__user=follower, follower=user.user, display_status=True)
-        if follow:
-            follow.update(mutual_following=True)
-        obj.mutual_following = True
+        if not change:
+            user = form.cleaned_data['user']
+            follower = form.cleaned_data['follower']
+            mutual_following = form.cleaned_data['mutual_following']
+            follow = UserFollow.objects.filter(user__user=follower, follower=user.user, display_status=True)
+            if follow:
+                follow.update(mutual_following=True)
+                obj.mutual_following = True
+            else:
+                if mutual_following:
+                    UserFollow.objects.update_or_create(user=follower.user_msg, follower=user.user, defaults={'display_status': True, 'mutual_following': True})
         super().save_model(request, obj, form, change)
 
 

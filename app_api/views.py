@@ -1072,13 +1072,13 @@ class PicThread(threading.Thread):
 def home_api(request):
 
     if request.method == 'GET':
-        flag = False
+        flag = True
         post_msg = []
         user_id = request.GET.get('user')
         page = request.GET.get('page', 1)
         if user_id:
             posts = Post.objects.filter(writer_id=user_id)
-            flag = True
+            flag = False
         else:
             person_id = request.session.get('id')
             person = UserAll.objects.get(id=person_id)

@@ -119,7 +119,7 @@ class UserClass():
 
     def upload_avatar(self, request):
         user = UserAll.objects.get(id=self.id)
-        pic = request.FILE.get('pic')
+        pic = request.FILES.get('pic')
         suffix = os.path.splitext(pic.name)[1]
         if not suffix:
             return False
@@ -780,14 +780,15 @@ def pwd_reset(request, user_id):
         return JsonResponse({'status': False, 'msg': "原密码错误"})
 
 
-@login_required
+# @login_required
 def upload_photo(request):
     try:
         user_id = int(request.POST.get('user_id'))
     except Exception as e:
+        print(e)
         return JsonResponse({'status': False, 'msg': "id格式错误"})
-    if int(request.session.get('id')) != user_id:
-        return JsonResponse({'status': False, 'msg': "无权限"})
+    # if int(request.session.get('id')) != user_id:
+    #     return JsonResponse({'status': False, 'msg': "无权限"})
     type = request.POST.get('type')
     user = UserClassForProject(id=user_id)
     if not user.check_user():

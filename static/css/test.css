@@ -4,19 +4,40 @@
   top: 0;
 }
 
+#picCanvas{
+  position: relative;
+  left: 100px
+}
+
+#blockCanvas{
+  position: absolute;
+  left: -70px;
+}
+#shadowCanvas{
+  position: absolute;
+  left: -70px;
+
+}
 .sliderContainer {
   position: relative;
   text-align: center;
   float: bottom;
-  width: 310px;
+  width: 300px;
   height: 40px;
   line-height: 40px;
   margin-top: 15px;
   background: #f7f9fa;
   color: #45494c;
   border: 1px solid #e4e7eb;
+  left: 100px;
+
 }
 
+#sliderCaptcha {
+  position: absolute;
+  left: 100px;
+  top: 150px;
+}
 .sliderContainer_active .slider {
   height: 38px;
   top: -1px;

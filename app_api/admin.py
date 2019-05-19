@@ -46,6 +46,8 @@ class UserAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.password = hashlib.sha1(obj.password.encode('utf-8')).hexdigest()
         super().save_model(request, obj, form, change)
+        if not UserDetailMsg.objects.filter(user_id=obj.id):
+            UserDetailMsg.objects.create(user=obj)
 
 
 @admin.register(Tags)

@@ -208,13 +208,16 @@ def login_required(func):
             decorate_func = func(request, *args, **kwargs)
             return decorate_func
         else:
-            return JsonResponse({'status': False, 'msg': "未登录", 'error_code': "无权限"})
+            return JsonResponse({'status': False, 'msg': "未登录", 'error_code': "1"})
     return wrapper
 
 
 def login_api(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': False, 'msg': "请使用post请求"})
     name = request.POST.get('username')
     password = request.POST.get('password')
+    print(name, password)
     user = UserClass(name=name)
     user_obj = user.login(password)
     if user_obj:
@@ -1069,6 +1072,7 @@ def home_api(request):
             flag = True
         else:
             person_id = request.session.get('id')
+            print(person_id)
             person = UserAll.objects.get(id=person_id)
             interests = person.user_msg.interest.all()
             posts1 = Post.objects.filter(bar__feature__in=interests, display_status=True)
@@ -1090,7 +1094,7 @@ def home_api(request):
         for i in limited_posts:
             pics = list(PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True))
             if len(pics) > 3:
-                pics = PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)[2]
+                pics = ["/media/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)[2]]
             post_msg.append({
                 'post_id': i.id,
                 'post_pic': pics,

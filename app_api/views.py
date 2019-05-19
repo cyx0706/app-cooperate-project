@@ -1103,7 +1103,7 @@ def home_api(request):
             pics = ["/media/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)]
             if len(pics) > 3:
                 pics = pics[0:2]
-            post_msg.append({
+            info = {
                 'post_id': i.id,
                 'post_pic': pics,
                 'post_content': i.content,
@@ -1112,13 +1112,13 @@ def home_api(request):
                 'bar_id': i.bar_id,
                 'bar_name': i.bar.name,
                 'bar_tags': list(i.bar.feature.values_list('type', flat=True)),
-            })
+            }
             if flag:
-                post_msg.append({
-                    'writer_id': i.writer_id,
-                    'writer_name': i.writer.username,
-                    'writer_avatar': i.writer.avatar.url,
-                })
+                info['writer_id'] = i.writer_id,
+                info['writer_name'] = i.writer.username,
+                info['writer_avatar'] = i.writer.avatar.url,
+            post_msg.append(info)
+
         return JsonResponse({
             'number': len(posts),
             'page': current_page.number,

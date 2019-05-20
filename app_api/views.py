@@ -152,7 +152,6 @@ class UserClass():
             return False
 
 
-
 class UserClassForProject(UserClass):
 
     def __init__(self, id=0, name=None):
@@ -380,15 +379,20 @@ def floor_comment_info_api(request, user_id):
     post_floor = PostFloor.objects.select_related('user').filter(post__bar__master_id=user_id, display_status=True)
     post_floor_number = post_floor.count()
     for floor in post_floor:
+        # 自己盖的楼层不提示消息
+        if floor.user_id == int(user_id):
+            continue
         floor_comment_info.append({
             'id': floor.id,
-            'post_content': floor.content,
+            'post_content': floor.post.content,
             'post_id': floor.post_id,
             'writer_id': floor.user_id,
             'writer_name': floor.user.username,
             'writer_avatar': floor.user.avatar.url,
             'read_status': floor.read_status,
             'time': str(floor.create_time),
+            'floor_number': floor.floor_number,
+            'floor_content': floor.content,
         })
     post_floor.update(read_status=True)
     return JsonResponse({
@@ -405,6 +409,9 @@ def comment_info_api(request, user_id):
     replies = FloorComments.objects.filter((Q(replied_comment__in=user_comment_ids)| Q(reply__user_id=user_id))& Q(display_status=True)).select_related('user', 'reply')
     comment_info_number = replies.count()
     for a_reply in replies:
+        # 自己评论自己不在消息提醒里
+        if a_reply.user_id == int(user_id):
+            continue
         comment_info.append({
             'id': a_reply.id,
             'comment_user_id': a_reply.user_id,
@@ -468,7 +475,8 @@ def praise_info_api(request, user_id):
     praise_number = 0
     post_ids = list(Post.objects.filter(writer_id=user_id).values_list('id', flat=True))
     for post_id in post_ids:
-        user_praises = UserPraise.objects.filter(post_id=post_id, display_status=True, info_status=True).select_related('post', 'user__user')
+        # 自己点赞自己不会在消息里
+        user_praises = UserPraise.objects.filter(post_id=post_id, display_status=True, info_status=True).exclude(user__user_id=user_id).select_related('post', 'user__user')
         if user_praises:
             post_photo = PostPhotos.objects.filter(post_id=post_id).first()
             if post_photo:
@@ -497,6 +505,7 @@ def praise_info_api(request, user_id):
 
 
 @login_required
+@cache_page(5*60)
 def watching_bar_api(request, user_id):
     if request.method == 'DELETE':
         bar_id = request.DELETE.get('bar_id')
@@ -705,6 +714,7 @@ def user_collection_api(request, user_id):
 
 
 @login_required
+@cache_page(2*60)
 def personal_center_api(request, user_id):
     try:
         user = UserAll.objects.get(id=user_id)
@@ -725,10 +735,10 @@ def personal_center_api(request, user_id):
                 'description': user.user_msg.description,
                 'birthday': birthday,
                 'avatar': user.avatar.url,
-                'follower_number': user.user_msg.follow.count(),
+                'follower_number': UserWatching.objects.filter(user__user=user, display_status=True).count(),
                 'collection_number': user.user_msg.collections.count(),
-                'concern_number': user.user_msg.follow.count(),
-                'watched_bar_number': user.user_msg.watching.count(),
+                'concern_number': UserWatching.objects.filter(follower=user, display_status=True).count(),
+                'watched_bar_number': user.user_msg.watching.filter(userwatching__display_status=True).count(),
                 'background_pic': user.user_msg.background_pic.url,
                 'interests': [x.type for x in user.user_msg.interest.all()]
             })
@@ -817,7 +827,6 @@ def search_api(request):
     output = []
     type = request.GET.get('type', 'post')
     search = request.GET.get('search')
-    print(search)
     if not search:
         return JsonResponse({'status': False, 'msg': "请指定查找内容"})
     if type == 'bar':
@@ -829,8 +838,8 @@ def search_api(request):
                 'bar_description': bar.short_description,
                 'bar_icon': bar.photo.url,
                 'post_number': bar.bar_number,
-                'watching_number': UserWatching.objects.filter(bar_id=bar.id).count(),
-                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id)),
+                'watching_number': UserWatching.objects.filter(bar_id=bar.id, display_status=True).count(),
+                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, display_status=True)),
             })
         return JsonResponse({
             'bar_number': bars.count(),
@@ -852,8 +861,8 @@ def search_api(request):
                 'post_content': post.content,
                 'bar_name': post.bar.name,
                 'post_photo': photo_url,
-                'comment_number': FloorComments.objects.filter(reply_id=post.id).count(),
-                'praise_number': UserPraise.objects.filter(post_id=post.id).count(),
+                'comment_number': FloorComments.objects.filter(reply_id=post.id, status=True).count(),
+                'praise_number': UserPraise.objects.filter(post_id=post.id, display_status=True).count(),
             })
         return JsonResponse({
             'post_number': posts.count(),
@@ -866,7 +875,7 @@ def search_api(request):
                 'user_id': user.id,
                 'user_avatar': user.avatar.url,
                 'user_name': user.username,
-                'user_followers': UserFollow.objects.filter(follower_id=user.id).count(),
+                'user_followers': UserFollow.objects.filter(follower_id=user.id, display_status=True).count(),
             })
         return JsonResponse({
             'user_number': users.count(),
@@ -1018,7 +1027,7 @@ def post_msg_api(request, post_id):
         post_msg = {
             'person_id': post.writer_id,
             'person_avatar': post.writer.avatar.url,
-            'follow_status': bool(UserFollow.objects.filter(user__user_id=user_id, follower_id=post.writer_id)),
+            'follow_status': bool(UserFollow.objects.filter(user__user_id=user_id, follower_id=post.writer_id, display_status=True)),
             'time': str(post.create_time),
             'pic': list(PostPhotos.objects.filter(post_id=post_id).values_list('pic', flat=True)),
             'content': post.content,
@@ -1029,7 +1038,7 @@ def post_msg_api(request, post_id):
             'status': True,
             'user_id': user_id,
             'collection_status': bool(UserAll.objects.get(id=user_id).user_msg.collections.filter(id=post_id)),
-            'praise_status': bool(UserAll.objects.get(id=user_id).user_msg.praise.filter(id=post_id)),
+            'praise_status': bool(UserPraise.objects.filter(user__user_id=user_id, display_status=True)),
             'post_msg': post_msg,
         })
 
@@ -1114,8 +1123,8 @@ def home_api(request):
                 'post_id': i.id,
                 'post_pic': pics,
                 'post_content': i.content,
-                'comment_number': FloorComments.objects.filter(reply_id=i.id).count(),
-                'praise_number': UserPraise.objects.filter(post_id=i.id).count(),
+                'comment_number': FloorComments.objects.filter(reply_id=i.id, status=True).count(),
+                'praise_number': UserPraise.objects.filter(post_id=i.id, display_status=True).count(),
                 'bar_id': i.bar_id,
                 'bar_name': i.bar.name,
                 'bar_tags': list(i.bar.feature.values_list('type', flat=True)),
@@ -1192,7 +1201,7 @@ def post_bar_api(request):
             return JsonResponse({'status': False, 'msg': "id不存在"})
         else:
             post_info = []
-            posts = Post.objects.filter(bar_id=bar_id).select_related('writer')
+            posts = Post.objects.filter(bar_id=bar_id, display_status=True).select_related('writer')
             for i in posts:
                 post_info.append({
                     'writer_id': i.writer_id,
@@ -1200,8 +1209,8 @@ def post_bar_api(request):
                     'writer_name': i.writer.username,
                     'post_content': i.content,
                     'post_pic': ["/media/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)],
-                    'comment_number': FloorComments.objects.filter(reply__post_id=i.id).count(),
-                    'praise_number': UserPraise.objects.filter(post_id=i.id).count(),
+                    'comment_number': FloorComments.objects.filter(reply__post_id=i.id, status=True).count(),
+                    'praise_number': UserPraise.objects.filter(post_id=i.id, display_status=True).count(),
                     'time': str(i.create_time),
                 })
             return JsonResponse({
@@ -1209,10 +1218,10 @@ def post_bar_api(request):
                 'bar_id': bar.id,
                 'name': bar.name,
                 'icon': bar.photo.url,
-                'watcher_number': UserWatching.objects.filter(bar_id=bar.id).count(),
+                'watcher_number': UserWatching.objects.filter(bar_id=bar.id, display_status=True).count(),
                 'post_number': bar.bar_number,
                 'description': bar.short_description,
-                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar_id)),
+                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar_id, display_status=True)),
                 'post_info': post_info,
             })
     elif request.GET.get('bar_tag'):
@@ -1226,7 +1235,7 @@ def post_bar_api(request):
                 'icon': bar.photo.url,
                 'post_number': bar.bar_number,
                 'description': bar.short_description,
-                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar.id))
+                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar.id, display_status=True))
             })
         return JsonResponse({
             'status': True,

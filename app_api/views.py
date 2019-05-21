@@ -666,6 +666,7 @@ def user_follower_api(request, user_id):
 
 
 @login_required
+@cache_page(2*60)
 def user_collection_api(request, user_id):
     try:
         user = UserDetailMsg.objects.get(user_id=user_id)
@@ -714,7 +715,6 @@ def user_collection_api(request, user_id):
 
 
 @login_required
-@cache_page(2*60)
 def personal_center_api(request, user_id):
     try:
         user = UserAll.objects.get(id=user_id)
@@ -723,6 +723,15 @@ def personal_center_api(request, user_id):
         return JsonResponse({'status': False, 'msg': "用户不存在"})
     else:
         if request.method == 'GET':
+            type = request.GET.get('type')
+            if type and type == 'message':
+                ids = FloorComments.objects.exclude(replied_comment=0).values_list('id', flat=True)
+                return JsonResponse({
+                    'floor_message': PostFloor.objects.filter(post__bar__master_id=user_id).only('post__bar__master_id'),
+                    'reply_message': FloorComments.objects.filter(user_id=user_id, id__in=ids),
+                    'praise_message': UserPraise.objects.filter(post__bar__master_id=user_id).only('post__bar__master_id'),
+                    'follower_message': UserFollow.objects.filter(follower_id=user_id),
+                })
             birthday = user.user_msg.birthday
             if birthday is None:
                 birthday = None

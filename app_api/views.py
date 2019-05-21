@@ -735,9 +735,9 @@ def personal_center_api(request, user_id):
                 'description': user.user_msg.description,
                 'birthday': birthday,
                 'avatar': user.avatar.url,
-                'follower_number': UserWatching.objects.filter(user__user=user, display_status=True).count(),
+                'follower_number': UserFollow.objects.filter(user__user=user, display_status=True).count(),
                 'collection_number': user.user_msg.collections.count(),
-                'concern_number': UserWatching.objects.filter(follower=user, display_status=True).count(),
+                'concern_number': UserFollow.objects.filter(follower=user, display_status=True).count(),
                 'watched_bar_number': user.user_msg.watching.filter(userwatching__display_status=True).count(),
                 'background_pic': user.user_msg.background_pic.url,
                 'interests': [x.type for x in user.user_msg.interest.all()]

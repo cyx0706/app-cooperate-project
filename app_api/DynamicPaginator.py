@@ -54,10 +54,10 @@ class PaginatorThroughLast():
 
     def __init__(self, object_queryset, per_page, lastId):
         self.lastId = lastId
-        info_log.info(self.lastId)
         self.object_queryset = object_queryset
         self.per_page = per_page
         self.count_page()
+        self.checklastId()
 
     def count_page(self):
         self.page_number = int(math.ceil(self.object_queryset.count() / self.per_page))

@@ -12,7 +12,9 @@ import re
 import hashlib
 import random
 import threading
+import logging
 
+info_log = logging.getLogger('info')
 from app_api.DFA_Filter import DFAFilter
 
 
@@ -197,8 +199,17 @@ class UserClassForProject(UserClass):
         return False
 
 
+def info_logged(func):
+    def wrapper(request):
+        info_log.info('{}[{}]'.format(request.path, request.method))
+        decorate_func = func(request)
+        return decorate_func
+    return wrapper
+
+
 def login_required(func):
     def wrapper(request,*args, **kwargs):
+        info_log.info('{}[{}]'.format(request.path, request.method))
         id = request.session.get('id')
         if id:
             user_id = kwargs.get('user_id', None)
@@ -211,7 +222,7 @@ def login_required(func):
             return JsonResponse({'status': False, 'msg': "未登录", 'error_code': "1"})
     return wrapper
 
-
+@info_logged
 def login_api(request):
     if request.method != 'POST':
         return JsonResponse({'status': False, 'msg': "请使用post请求"})
@@ -229,7 +240,7 @@ def login_api(request):
     else:
         return JsonResponse({'status': False, 'msg': "账号或密码错误"})
 
-
+@info_logged
 def email_api(request):
     time = 1
     email = request.POST.get('email', '23')
@@ -247,7 +258,7 @@ def email_api(request):
     else:
         return JsonResponse({'status': False, 'msg': "邮箱格式错误"})
 
-
+@info_logged
 def find_pwd_api(request):
 
     if request.method == 'GET':
@@ -287,7 +298,7 @@ def find_pwd_api(request):
             user.save()
             return JsonResponse({'status': True})
 
-
+@info_logged
 def check_email_code_api(request):
     code = request.POST.get('code', None)
     if request.session.get('code') == code:
@@ -300,7 +311,7 @@ def check_email_code_api(request):
     else:
         return JsonResponse({'status': False, 'error_code': 3, 'msg': "邮箱验证码错误"})
 
-
+@info_logged
 def register_api(request):
 
     if request.method == 'GET':
@@ -355,7 +366,7 @@ def register_api(request):
         else:
             return JsonResponse({'status': False, 'error_code': 1, 'msg': "无权限"})
 
-
+@info_logged
 def logout_api(request):
     if request.method == 'POST':
         try:
@@ -374,13 +385,13 @@ def logout_api(request):
 
 @login_required
 def floor_comment_info_api(request, user_id):
-
+    user_id = int(user_id)
     floor_comment_info = []
     post_floor = PostFloor.objects.select_related('user').filter(post__bar__master_id=user_id, display_status=True)
     post_floor_number = post_floor.count()
     for floor in post_floor:
         # 自己盖的楼层不提示消息
-        if floor.user_id == int(user_id):
+        if floor.user_id == user_id:
             continue
         floor_comment_info.append({
             'id': floor.id,
@@ -404,14 +415,21 @@ def floor_comment_info_api(request, user_id):
 
 @login_required
 def comment_info_api(request, user_id):
+    user_id = int(user_id)
     comment_info = []
     user_comment_ids = list(FloorComments.objects.filter(user_id=user_id, status=True).values_list('id', flat=True))
     replies = FloorComments.objects.filter((Q(replied_comment__in=user_comment_ids)| Q(reply__user_id=user_id))& Q(display_status=True)).select_related('user', 'reply')
     comment_info_number = replies.count()
     for a_reply in replies:
         # 自己评论自己不在消息提醒里
-        if a_reply.user_id == int(user_id):
+        if a_reply.user_id == user_id:
             continue
+        if a_reply.reply.user_id==user_id:
+            floor_reply_status = True
+            replied_content = a_reply.reply.content
+        else:
+            floor_reply_status = False
+            replied_content = FloorComments.objects.filter(id=a_reply.replied_comment, status=True).values_list('content')[0]
         comment_info.append({
             'id': a_reply.id,
             'comment_user_id': a_reply.user_id,
@@ -421,7 +439,8 @@ def comment_info_api(request, user_id):
             'time': str(a_reply.create_time),
             'post_id': a_reply.reply.post_id,
             'comment_floor': a_reply.reply.floor_number,
-            'floor_reply_status': bool(a_reply.reply.user_id==int(user_id)),
+            'floor_reply_status': floor_reply_status,
+            'replied_content': replied_content,
             'read_status': a_reply.read_status,
         })
     replies.update(read_status=True)
@@ -434,11 +453,12 @@ def comment_info_api(request, user_id):
 
 @login_required
 def delete_comment_api(request, user_id):
+    user_id = int(user_id)
     delete_id = request.DELETE.get('comment_id', 0)
     comment = FloorComments.objects.filter(id=delete_id)
     if comment:
         comment = comment[0]
-        if comment.user_id == int(user_id):
+        if comment.user_id == user_id:
             if comment.replied_comment == 0:
                 FloorComments.objects.filter(replied_comment=comment.id).delete()
             comment.delete()
@@ -451,6 +471,7 @@ def delete_comment_api(request, user_id):
 
 @login_required
 def delete_info_api(request, user_id):
+    user_id = int(user_id)
     type = request.DELETE.get('type')
     if type == 'praise':
         praise_id = request.DELETE.getlist('praise_id')
@@ -471,6 +492,7 @@ def delete_info_api(request, user_id):
 
 @login_required
 def praise_info_api(request, user_id):
+    user_id = int(user_id)
     praise_info = []
     praise_number = 0
     post_ids = list(Post.objects.filter(writer_id=user_id).values_list('id', flat=True))
@@ -478,11 +500,6 @@ def praise_info_api(request, user_id):
         # 自己点赞自己不会在消息里
         user_praises = UserPraise.objects.filter(post_id=post_id, display_status=True, info_status=True).exclude(user__user_id=user_id).select_related('post', 'user__user')
         if user_praises:
-            post_photo = PostPhotos.objects.filter(post_id=post_id).first()
-            if post_photo:
-                post_photo = post_photo.pic.url
-            else:
-                post_photo = None
             for praise in user_praises:
                 praise_number += 1
                 praise_info.append({
@@ -492,7 +509,7 @@ def praise_info_api(request, user_id):
                     'person_avatar': praise.user.user.avatar.url,
                     'person_name': praise.user.user.username,
                     'post_id': post_id,
-                    'post_photo': post_photo,
+                    'post_content': praise.post.content,
                 })
             user_praises.update(read_status=True)
         else:
@@ -507,6 +524,7 @@ def praise_info_api(request, user_id):
 @login_required
 @cache_page(5*60)
 def watching_bar_api(request, user_id):
+    user_id = int(user_id)
     if request.method == 'DELETE':
         bar_id = request.DELETE.get('bar_id')
         temp = UserWatching.objects.filter(bar_id=bar_id, user__user_id=user_id).update(display_status=False, info_status=False)
@@ -541,6 +559,7 @@ def watching_bar_api(request, user_id):
 
 @login_required
 def msg_api(request, user_id):
+    user_id = int(user_id)
     if request.method == 'DELETE':
         type = request.DELETE.get('type')
         if type == 'watching':
@@ -558,7 +577,7 @@ def msg_api(request, user_id):
         new_follower = []
         new_watcher = []
         follower_update_ids = []
-        followers = UserFollow.objects.select_related('user').filter(follower_id=int(user_id), display_status=True, info_status=True)[0:10]
+        followers = UserFollow.objects.select_related('user').filter(follower_id=int(user_id), display_status=True, info_status=True)
         new_follower_number = followers.count()
         for follower in followers:
             person = follower.user.user
@@ -589,8 +608,7 @@ def msg_api(request, user_id):
         UserWatching.objects.filter(id__in=watcher_update_ids).update(read_status=True)
 
         return JsonResponse({
-            'user_id': int(user_id),
-            'limit': 10,
+            'user_id': user_id,
             'number': new_follower_number + new_watcher_number,
             'new_follower_number': new_follower_number,
             'new_follower': new_follower,
@@ -601,7 +619,7 @@ def msg_api(request, user_id):
 
 @login_required
 def user_concern_api(request, user_id):
-
+    user_id = int(user_id)
     if request.method == 'DELETE':
         delete_id = request.DELETE.get('user_id')
         temp = UserFollow.objects.filter(user__user_id=user_id, follower_id=delete_id)
@@ -648,6 +666,7 @@ def user_concern_api(request, user_id):
 
 @login_required
 def user_follower_api(request, user_id):
+    user_id = int(user_id)
     user_followers = UserFollow.objects.select_related('user__user').filter(follower_id=user_id, display_status=True)
     follower_number = user_followers.count()
     follower = []
@@ -668,6 +687,7 @@ def user_follower_api(request, user_id):
 @login_required
 @cache_page(2*60)
 def user_collection_api(request, user_id):
+    user_id = int(user_id)
     try:
         user = UserDetailMsg.objects.get(user_id=user_id)
     except Exception as e:
@@ -716,6 +736,7 @@ def user_collection_api(request, user_id):
 
 @login_required
 def personal_center_api(request, user_id):
+    user_id = int(user_id)
     try:
         user = UserAll.objects.get(id=user_id)
     except UserAll.DoesNotExist as e:
@@ -791,6 +812,7 @@ def personal_center_api(request, user_id):
 
 @login_required
 def pwd_reset(request, user_id):
+    user_id = int(user_id)
     old_pwd = request.POST.get('old_pwd')
     new_pwd = request.POST.get('new_pwd')
     a_user = UserClass(id=user_id)
@@ -896,6 +918,7 @@ def search_api(request):
 
 @login_required
 def floor_msg_api(request, post_id):
+    post_id = int(post_id)
     try:
         post = Post.objects.get(id=post_id)
     except Post.DoesNotExist as e:
@@ -906,21 +929,21 @@ def floor_msg_api(request, post_id):
             user_id = request.POST.get('user_id')
             if not int(request.session.get('id')) == int(user_id):
                 return JsonResponse({'status': False, 'msg': "无权限"})
-            reply_id = int(request.POST.get('reply_id'))
+            reply_id = int(request.POST.get('reply_id'), 0)
             reply_floor = request.POST.get('reply_floor')
             # 敏感词过滤
             gfw = DFAFilter()
             gfw.database_parse()
             content = request.POST.get('content')
             content = gfw.filter(content)
-            if FloorComments.objects.filter(id=reply_id) or reply_id == 0:
+            if reply_id != 0:
+                floor = PostFloor.objects.filter(post=post, floor_number=reply_floor, id=reply_id)
+            else:
                 floor = PostFloor.objects.filter(post=post, floor_number=reply_floor)
-                if floor:
-                    floor = floor[0]
-                    FloorComments(reply_id=floor.id, user_id=user_id, content=content, replied_comment=reply_id).save()
-                    return JsonResponse({'status': True})
-                else:
-                    return JsonResponse({'status': False, 'msg': "楼层不存在"})
+            if floor:
+                floor = floor[0]
+                FloorComments(reply_id=floor.id, user_id=user_id, content=content, replied_comment=0).save()
+                return JsonResponse({'status': True})
             else:
                 return JsonResponse({'status': False, 'msg': "评论不存在"})
         if request.method == 'GET':
@@ -1035,6 +1058,7 @@ def post_msg_api(request, post_id):
         user_id = request.session.get('id')
         post_msg = {
             'person_id': post.writer_id,
+            'person_name': post.writer.username,
             'person_avatar': post.writer.avatar.url,
             'follow_status': bool(UserFollow.objects.filter(user__user_id=user_id, follower_id=post.writer_id, display_status=True)),
             'time': str(post.create_time),
@@ -1216,6 +1240,7 @@ def post_bar_api(request):
                     'writer_id': i.writer_id,
                     'writer_avatar': i.writer.avatar.url,
                     'writer_name': i.writer.username,
+                    'post_id': i.id,
                     'post_content': i.content,
                     'post_pic': ["/media/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)],
                     'comment_number': FloorComments.objects.filter(reply__post_id=i.id, status=True).count(),

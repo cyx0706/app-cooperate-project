@@ -138,68 +138,68 @@ EMAIL_USE_TLS = False
 
 # logger
 BASE_LOG_DIR = os.path.join(BASE_DIR, "log")
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'handlers': {
-#         'console':{
-#             'level':'DEBUG',
-#             'class':'logging.StreamHandler',
-#         },
-#         'file': {
-#             'level': 'DEBUG',
-#             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切换文件当达到最大大小
-#             'filename': os.path.join(BASE_LOG_DIR, 'debug.log').replace('\\', '/'),
-#             'formatter': 'standard',
-#             'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
-#             'encoding': 'UTF-8',
-#         },
-#         'warning_file': {
-#             'level': 'WARNING',
-#             'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切换文件当达到最大大小
-#             'filename': os.path.join(BASE_LOG_DIR, 'warning.log').replace('\\', '/'),
-#             'formatter': 'standard',
-#             'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
-#             'encoding': 'UTF-8',
-#         },
-#         'info_file': {
-#             'level': 'INFO',
-#             'class': 'logging.handlers.RotatingFileHandler',
-#             'filename': os.path.join(BASE_LOG_DIR, 'info.log').replace('\\', '/'),
-#             'formatter': 'standard',
-#             'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
-#             'encoding': 'UTF-8',
-#         }
-#     },
-#     'formatters': {
-#         'standard': {
-#             'format': '%(asctime)s [%(threadName)s:%(thread)d] [%(name)s:%(lineno)d]'+
-#                       '[%(module)s:%(funcName)s] [%(levelname)s]- %(message)s'  #日志格式
-#         },
-#         # 简单的日志格式
-#         'simple': {
-#             'format': '[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d]%(message)s'
-#         },
-#         # 定义一个特殊的日志格式
-#         'collect': {
-#             'format': '%(message)s'
-#         }
-#     },
-#     'loggers': {
-#         'django': {
-#             'handlers': ['file', 'console'],
-#             'level': 'DEBUG',
-#             'propagate': True,
-#         },
-#         'warning': {
-#             'handlers': ['warning_file',],
-#             'level': 'WARNING',
-#             'propagate': True,
-#         },
-#         'info': {
-#             'handlers': ['info_file', ],
-#             'level': 'INFO',
-#             'propagate': False,
-#         }
-#     }
-# }
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        # 'console':{
+        #     'level':'DEBUG',
+        #     'class':'logging.StreamHandler',
+        # },
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切换文件当达到最大大小
+            'filename': os.path.join(BASE_LOG_DIR, 'debug.log').replace('\\', '/'),
+            'formatter': 'standard',
+            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
+            'encoding': 'UTF-8',
+        },
+        'warning_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切换文件当达到最大大小
+            'filename': os.path.join(BASE_LOG_DIR, 'warning.log').replace('\\', '/'),
+            'formatter': 'standard',
+            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
+            'encoding': 'UTF-8',
+        },
+        'info_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_LOG_DIR, 'info.log').replace('\\', '/'),
+            'formatter': 'standard',
+            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
+            'encoding': 'UTF-8',
+        }
+    },
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(threadName)s:%(thread)d] [%(name)s:%(lineno)d]'+
+                      '[%(module)s:%(funcName)s] [%(levelname)s]- %(message)s'  #日志格式
+        },
+        # 简单的日志格式
+        'simple': {
+            'format': '[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d]%(message)s'
+        },
+        # 定义一个特殊的日志格式
+        'collect': {
+            'format': '%(message)s'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'warning': {
+            'handlers': ['warning_file',],
+            'level': 'WARNING',
+            'propagate': True,
+        },
+        'info': {
+            'handlers': ['info_file', ],
+            'level': 'INFO',
+            'propagate': False,
+        }
+    }
+}

@@ -55,8 +55,8 @@ function createSlider(container){
     borderX = sliderContainer.offsetLeft;
 
     slider.addEventListener('mousedown', dragSlider);
-    slider.addEventListener('mouseup', checkSlider);
-    sliderContainer.addEventListener('mousemove',moveSlider);
+    document.addEventListener('mouseup', checkSlider);
+    document.addEventListener('mousemove',moveSlider);
 
 }
 
@@ -123,12 +123,15 @@ $(function () {
     captcha = document.getElementById('sliderCaptcha');
     var captchaPic = document.createElement('div');
     captchaPic.id = 'captchaPic';
-    captcha.appendChild(captchaPic);
     var tips = document.createElement('p');
     tips.id = "tips";
     var restart = document.createElement('i');
     var colored_text = document.createElement('span');
+    colored_text.innerHTML="33333";
+    colored_text.className = 'colorText';
     var text = document.createElement('span');
+    text.innerHTML="33333";
+    text.className = 'text';
     tips.appendChild(restart);
     tips.appendChild(colored_text);
     tips.appendChild(text);
@@ -138,7 +141,11 @@ $(function () {
     block_canvas.id = 'blockCanvas';
     var L = l + r * 2 + 3; // 滑块实际边长
     var shadow_canvas = document.createElement('canvas');
+    var bkColor = document.createElement('div');
+    bkColor.className = 'bkColor';
     shadow_canvas.id = 'shadowCanvas';
+    captcha.appendChild(bkColor);
+    bkColor.appendChild(captchaPic);
     captchaPic.appendChild(pic_canvas);
     captchaPic.appendChild(shadow_canvas);
     captchaPic.appendChild(block_canvas);

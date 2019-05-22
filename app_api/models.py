@@ -124,7 +124,7 @@ class PostFloor(models.Model):
     class Meta():
         verbose_name = "楼"
         verbose_name_plural = "楼"
-        ordering = ['-create_time']
+        ordering = ['create_time']
         index_together = ['create_time']
 
     def __str__(self):
@@ -163,7 +163,7 @@ class FloorComments(models.Model):
         ordering = ['-create_time']
         verbose_name = "评论"
         verbose_name_plural = "评论"
-        index_together = ['create_time']
+        index_together = ['create_time', 'replied_comment']
 
     def get_user(self):
         return self.user.username

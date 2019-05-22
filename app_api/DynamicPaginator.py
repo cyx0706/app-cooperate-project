@@ -3,7 +3,7 @@
 from django.core.paginator import Paginator
 from django.utils.translation import ugettext_lazy as _
 import math
-
+import logging
 class IDNotExist(Exception):
     pass
 
@@ -48,12 +48,13 @@ class DynamicPaginator(Paginator):
             top = self.count
         return self._get_page(object_list[bottom:top], number, self)
 
+info_log = logging.getLogger('info')
 
 class PaginatorThroughLast():
 
     def __init__(self, object_queryset, per_page, lastId):
         self.lastId = lastId
-        print(self.lastId)
+        info_log.info(self.lastId)
         self.object_queryset = object_queryset
         self.per_page = per_page
         self.count_page()
@@ -73,5 +74,6 @@ class PaginatorThroughLast():
             raise IDNotInteger(_("That ID Must Be Integer"))
 
     def page(self):
+        info_log.info(self.lastId)
         self.object_queryset = self.object_queryset.filter(id__lt=self.lastId)
         return self.object_queryset[0: self.per_page]

@@ -123,7 +123,7 @@ class PostBarTagsFilter(admin.SimpleListFilter):
 class PostBarsAdmin(admin.ModelAdmin):
 
     list_per_page = 10
-    list_display = ['name', 'get_master', 'create_time', 'bar_number']
+    list_display = ['name', 'get_master', 'create_time', 'bar_number', 'id']
     list_filter = (
         (PostBarTagsFilter),
     )
@@ -141,7 +141,7 @@ class PhotoInline(admin.TabularInline):
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
 
-    list_display = ['title', 'create_time', 'get_writer', 'get_bar', 'display_status']
+    list_display = ['id','title', 'create_time', 'get_writer', 'get_bar', 'display_status']
     list_per_page = 10
     inlines = [PhotoInline]
 

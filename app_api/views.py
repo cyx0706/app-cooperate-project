@@ -586,7 +586,7 @@ def msg_api(request, user_id):
             new_follower.append({
                 'id': follower.id,
                 'user': person.id,
-                'avatar': person.user.avatar.url,
+                'avatar': person.avatar.url,
                 'username': person.username,
                 'read_status': follower.read_status,
             })

@@ -388,7 +388,7 @@ def logout_api(request):
 def floor_comment_info_api(request, user_id):
     user_id = int(user_id)
     floor_comment_info = []
-    post_floor = PostFloor.objects.select_related('user').filter(post__bar__master_id=user_id, display_status=True)
+    post_floor = PostFloor.objects.select_related('user').filter(post__writer_id=user_id, display_status=True)
     post_floor_number = post_floor.count()
     for floor in post_floor:
         # 自己盖的楼层不提示消息

@@ -990,7 +990,7 @@ def floor_msg_api(request, post_id):
             else:
                 floor_info = []
                 page = request.GET.get('page', 1)
-                post_floor = PostFloor.objects.select_related('user').filter(post=post, unfold_status=True)
+                post_floor = PostFloor.objects.select_related('user').filter(post=post, unfold_status=True).exclude(floor_number=1)
                 paginator = Paginator(post_floor, 5)
                 num_page = paginator.num_pages
                 try:

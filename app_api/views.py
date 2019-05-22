@@ -1137,8 +1137,8 @@ def home_api(request):
             ids = list(UserPraise.objects.annotate(count=Count('post_id')).order_by('-count').values_list('post', flat=True))
             posts2 = Post.objects.filter(id__in=ids)
             post3 = Post.objects.all()[0:20]
-            posts = (posts2 | posts1 | post3).distinct()
-            posts.order_by('-create_time')
+            posts = (posts2 | posts1 | post3).distinct().order_by('create_time')
+        info_logged(posts)
         paginator = PaginatorThroughLast(posts, 7, lastId=lastId)
         num_page = paginator.total_page()
         try:

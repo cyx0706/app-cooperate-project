@@ -1138,13 +1138,13 @@ def home_api(request):
             posts2 = Post.objects.filter(id__in=ids)
             post3 = Post.objects.all()[0:20]
             posts = (posts2 | posts1 | post3).distinct().order_by('create_time')
-        info_logged(posts)
+        info_log.info(posts)
         paginator = PaginatorThroughLast(posts, 7, lastId=lastId)
         num_page = paginator.total_page()
         try:
             limited_posts = paginator.page()
         except IDNotInteger as e:
-            info_logged(e)
+            info_log.info(e)
             return JsonResponse({'status': False, 'msg': "id不是无法转成整数"})
         temp = list(limited_posts)
         if temp:

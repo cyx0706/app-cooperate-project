@@ -666,6 +666,7 @@ def user_concern_api(request, user_id):
 
 
 @login_required
+@cache_page(5*60)
 def user_follower_api(request, user_id):
     user_id = int(user_id)
     user_followers = UserFollow.objects.select_related('user__user').filter(follower_id=user_id, display_status=True)
@@ -735,8 +736,8 @@ def user_collection_api(request, user_id):
         return JsonResponse({'status': True})
 
 
-@cache_page(5*60)
 @login_required
+@cache_page(5*60)
 def personal_center_api(request, user_id):
     user_id = int(user_id)
     try:
@@ -1123,6 +1124,7 @@ class PicThread(threading.Thread):
             print(e)
 
 @login_required
+@cache_page(5*60)
 def home_api(request):
 
     if request.method == 'GET':

@@ -136,6 +136,15 @@ EMAIL_HOST_PASSWORD = '0706XXSR'
 EMAIL_USE_TLS = False
 
 
+CACHES={
+    'default':{
+        'BACKEND':'redis_cache.cache.RedisCache',
+        'LOCATION':"localhost:6379",
+        'TIMEOUT':60,
+    }
+
+}
+
 # logger
 BASE_LOG_DIR = os.path.join(BASE_DIR, "log")
 LOGGING = {

@@ -735,6 +735,7 @@ def user_collection_api(request, user_id):
         return JsonResponse({'status': True})
 
 
+@cache_page(5*60)
 @login_required
 def personal_center_api(request, user_id):
     user_id = int(user_id)
@@ -749,9 +750,9 @@ def personal_center_api(request, user_id):
             if type and type == 'message':
                 ids = FloorComments.objects.exclude(replied_comment=0).values_list('id', flat=True)
                 return JsonResponse({
-                    'floor_message': PostFloor.objects.filter(post__bar__master_id=user_id).only('post__bar__master_id').count(),
+                    'floor_message': PostFloor.objects.filter(post__writer_id=user_id).only('post__bar__master_id').count(),
                     'reply_message': FloorComments.objects.filter(user_id=user_id, id__in=ids).count(),
-                    'praise_message': UserPraise.objects.filter(post__bar__master_id=user_id).only('post__bar__master_id').count(),
+                    'praise_message': UserPraise.objects.filter(post__writer_id=user_id).only('post__bar__master_id').count(),
                     'follower_message': UserFollow.objects.filter(follower_id=user_id).count(),
                 })
             birthday = user.user_msg.birthday
@@ -918,6 +919,7 @@ def search_api(request):
 
 
 @login_required
+@cache_page(60*10)
 def floor_msg_api(request, post_id):
     post_id = int(post_id)
     try:

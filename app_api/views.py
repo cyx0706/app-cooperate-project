@@ -752,7 +752,7 @@ def personal_center_api(request, user_id):
                 return JsonResponse({
                     'floor_message': PostFloor.objects.filter(post__writer_id=user_id, read_status=False).only('post__writer_id').exclude(user_id=user_id).count(),
                     'reply_message': FloorComments.objects.filter(user_id=user_id, id__in=ids, read_status=False).exclude(user_id=user_id).count(),
-                    'praise_message': UserPraise.objects.filter(post__writer_id=user_id, read_status=False).only('post__writer_id').count(),
+                    'praise_message': UserPraise.objects.filter(post__writer_id=user_id, read_status=False).exclude(user__user_id=user_id).only('post__writer_id').count(),
                     'follower_message': UserFollow.objects.filter(follower_id=user_id, read_status=False).count(),
                 })
             birthday = user.user_msg.birthday

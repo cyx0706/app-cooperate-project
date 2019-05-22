@@ -144,7 +144,8 @@ class PostFloor(models.Model):
             print(self.floor_number)
         else:
             # 楼层数+1
-            self.floor_number = list(PostFloor.objects.filter(post_id=self.post_id).values_list('floor_number', flat=True))[0] + 1
+            self.floor_number = list(PostFloor.objects.filter(post_id=self.post_id).values_list('floor_number', flat=True))[-1] + 1
+            print(list(PostFloor.objects.filter(post_id=self.post_id).values_list('floor_number', flat=True)))
         super(PostFloor, self).save(*args, **kwargs)
 
 

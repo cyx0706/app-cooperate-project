@@ -13,9 +13,10 @@ import hashlib
 import random
 import threading
 import logging
-
-info_log = logging.getLogger('info')
 from app_api.DFA_Filter import DFAFilter
+from app_api.DynamicPaginator import DynamicPaginator, PaginatorThroughLast, IDNotInteger
+info_log = logging.getLogger('info')
+
 
 
 def test_session(request):
@@ -1125,7 +1126,7 @@ def home_api(request):
     if request.method == 'GET':
         post_msg = []
         user_id = request.GET.get('user')
-        page = request.GET.get('page', 1)
+        lastId = request.GET.get('lastId', 0)
         if user_id:
             posts = Post.objects.filter(writer_id=user_id)
         else:
@@ -1136,18 +1137,19 @@ def home_api(request):
             ids = list(UserPraise.objects.annotate(count=Count('post_id')).order_by('-count').values_list('post', flat=True))
             posts2 = Post.objects.filter(id__in=ids)
             post3 = Post.objects.all()[0:20]
-            posts = list((posts2 | posts1 | post3).distinct())
-        paginator = Paginator(posts, 7)
-        num_page = paginator.num_pages
+            posts = (posts2 | posts1 | post3).distinct()
+        paginator = PaginatorThroughLast(posts, 7, lastId=lastId)
+        num_page = paginator.total_page()
         try:
-            current_page = paginator.page(page)
-            limited_posts = current_page.object_list
-        except PageNotAnInteger:
-            current_page = paginator.page(1)
-            limited_posts = current_page.object_list
-        except EmptyPage:
-            current_page = paginator.page(1)
-            limited_posts = current_page.object_list
+            limited_posts = paginator.page()
+        except IDNotInteger as e:
+            info_logged(e)
+            return JsonResponse({'status': False, 'msg': "id不是无法转成整数"})
+        temp = list(limited_posts)
+        if temp:
+            lastId = temp[-1].id
+        else:
+            lastId = 0
         for i in limited_posts:
             pics = ["/media/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)]
             info = {
@@ -1166,9 +1168,9 @@ def home_api(request):
             post_msg.append(info)
         return JsonResponse({
             'number': len(posts),
-            'page': current_page.number,
-            'this_page': len(limited_posts),
+            'lastId': lastId,
             'total_page': num_page,
+            'this_page': len(limited_posts),
             'per_page': 7,
             'post_msg': post_msg,
         })

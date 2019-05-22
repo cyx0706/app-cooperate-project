@@ -1150,8 +1150,6 @@ def home_api(request):
             limited_posts = current_page.object_list
         for i in limited_posts:
             pics = ["/media/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)]
-            if len(pics) > 3:
-                pics = pics[0:2]
             info = {
                 'post_id': i.id,
                 'post_pic': pics,
@@ -1184,7 +1182,7 @@ def home_api(request):
         if not request.session.get('id', None) != int(user_id):
             return JsonResponse({'status': False, 'msg': "无权限"})
         else:
-            if not PostBars.objects.filter(bar_id=bar_id):
+            if not PostBars.objects.filter(id=bar_id):
                 return JsonResponse({'status': False, 'msg': "帖子不存在"})
             # 多线程写入图片
             new_post = Post(writer_id=user_id, bar_id=bar_id, title=title, content=content)

@@ -932,6 +932,11 @@ def floor_msg_api(request, post_id):
                 return JsonResponse({'status': False, 'msg': "无权限"})
             reply_id = int(request.POST.get('reply_id'), 0)
             reply_floor = request.POST.get('reply_floor')
+            try:
+                reply_floor = int(reply_floor)
+            except Exception as e:
+                info_log.warning(e)
+                return JsonResponse({'status':False, 'msg': "楼层格式错误"})
             # 敏感词过滤
             gfw = DFAFilter()
             gfw.database_parse()

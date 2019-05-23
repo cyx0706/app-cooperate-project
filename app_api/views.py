@@ -939,6 +939,10 @@ def floor_msg_api(request, post_id):
             content = gfw.filter(content)
             if reply_id != 0:
                 floor = PostFloor.objects.filter(post=post, floor_number=reply_floor, id=reply_id)
+            elif reply_floor == 1:
+                user = UserAll.objects.get(id=user_id)
+                PostFloor.objects.create(post=post, user=user, content=content)
+                return JsonResponse({'status': True})
             else:
                 floor = PostFloor.objects.filter(post=post, floor_number=reply_floor)
             if floor:

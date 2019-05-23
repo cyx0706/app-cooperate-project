@@ -1065,6 +1065,8 @@ def post_msg_api(request, post_id):
         print(e)
         return JsonResponse({'status': False, 'msg': "不存在"})
     else:
+        if not post.display_status:
+            return JsonResponse({'status': False, 'msg': "不存在"})
         user_id = request.session.get('id')
         post_msg = {
             'person_id': post.writer_id,
@@ -1145,8 +1147,7 @@ def home_api(request):
             posts1 = Post.objects.filter(bar__feature__in=interests, display_status=True)
             ids = list(UserPraise.objects.annotate(count=Count('post_id')).order_by('-count').values_list('post', flat=True))
             posts2 = Post.objects.filter(id__in=ids)
-            post3 = Post.objects.all()[0:20]
-            posts = (posts2 | posts1 | post3).distinct().order_by('-create_time')
+            posts = (posts2 | posts1).distinct().order_by('-create_time')
         info_log.info(posts)
         paginator = PaginatorThroughLast(posts, 7, lastId=lastId)
         num_page = paginator.total_page()

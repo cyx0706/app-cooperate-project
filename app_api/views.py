@@ -789,7 +789,7 @@ def personal_center_api(request, user_id):
                 try:
                     gender = int(gender)
                 except Exception as e:
-                    print(e)
+                    info_log.warning(e)
                     return JsonResponse({'status': False, 'msg': "性别格式错误"})
                 if gender in [0, 1, 2]:
                     user.user_msg.gender = gender
@@ -801,7 +801,7 @@ def personal_center_api(request, user_id):
                     try:
                         user.user_msg.interest.add(Tags.objects.get(type=i))
                     except Exception as e:
-                        print(e)
+                        info_log.warning(e)
                         continue
             user.save()
             user.user_msg.save()

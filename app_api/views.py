@@ -523,7 +523,6 @@ def praise_info_api(request, user_id):
 
 
 @login_required
-@cache_page(5*60)
 def watching_bar_api(request, user_id):
     user_id = int(user_id)
     if request.method == 'DELETE':
@@ -666,7 +665,6 @@ def user_concern_api(request, user_id):
 
 
 @login_required
-@cache_page(5*60)
 def user_follower_api(request, user_id):
     user_id = int(user_id)
     user_followers = UserFollow.objects.select_related('user__user').filter(follower_id=user_id, display_status=True)
@@ -687,7 +685,6 @@ def user_follower_api(request, user_id):
 
 
 @login_required
-@cache_page(2*60)
 def user_collection_api(request, user_id):
     user_id = int(user_id)
     try:
@@ -920,7 +917,7 @@ def search_api(request):
 
 
 @login_required
-@cache_page(60*10)
+@cache_page(2*60)
 def floor_msg_api(request, post_id):
     post_id = int(post_id)
     try:
@@ -1051,7 +1048,6 @@ def floor_msg_api(request, post_id):
 
 
 @login_required
-@cache_page(60*10)
 def post_msg_api(request, post_id):
     try:
         post = Post.objects.get(id=post_id)
@@ -1124,7 +1120,6 @@ class PicThread(threading.Thread):
             print(e)
 
 @login_required
-@cache_page(5*60)
 def home_api(request):
 
     if request.method == 'GET':

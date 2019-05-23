@@ -85,26 +85,57 @@ function moveSlider(event) {
     }
 }
 
+function giveTips(tip, status){
+    tips = $('#tips');
+    if(status){
+        tips.children('.text').text("滑动位置正确");
+        tips.children('.colorText').text(tip).css({"color": 'green'});
+    }
+    else{
+        tips.children('.text').text("滑动位置错误");
+        tips.children('.colorText').text(tip).css({'color': 'red'});
+    }
+    tips.animate({bottom: 0}, 100);
+}
+
+function hideTips() {
+    tips.animate({bottom: -20}, 100);
+}
+
 function checkSlider() {
-    mouseMove = false;
+    if (mouseMove)
+         mouseMove = false;
     var left = $('#blockCanvas').offset().left;
     if (Math.abs(left-offX-170) < 5){
         console.log('success!');
         $('.sliderContainer').removeClass('sliderContainer_active');
         $('.sliderContainer').addClass('sliderContainer_success');
+        var success_tip = "成功";
+        $('.colorText').addClass('success');
+        giveTips(success_tip, 1)
     }
     else {
         console.log('false!');
         $('.sliderContainer').removeClass('sliderContainer_active');
         $('.sliderContainer').addClass('sliderContainer_fail');
-        alert("222");
+        // setTimeout(function () {
+        $('.coloredText').addClass('fail');
+        var fail_tip = "失败";
+        giveTips(fail_tip, 0);
+        // },2);
+
         // $('.sliderContainer').removeClass('sliderContainer_fail');
         // $('.sliderContainer').addClass('sliderContainer_active');
-        $('#blockCanvas').animate({left: -70}, 1000);
-        $('#shadowCanvas').animate({left: -70}, 1000);
-        $('.sliderMask').animate({width: 0}, 1000);
-        $('.slider').animate({left: 0}, 1000);
-        $('.sliderContainer').removeClass('sliderContainer_fail');
+        setTimeout(function () {
+            $('#blockCanvas').animate({left: -70}, 1000);
+            $('#shadowCanvas').animate({left: -70}, 1000);
+            $('.sliderMask').animate({width: 0}, 1000);
+            $('.slider').animate({left: 0}, 1000);
+            $('.sliderContainer').removeClass('sliderContainer_fail');
+            $('.colorText').removeClass('fail');
+            hideTips();
+        }, 2000);
+
 
 
     }
@@ -125,6 +156,8 @@ $(function () {
     captchaPic.id = 'captchaPic';
     var tips = document.createElement('p');
     tips.id = "tips";
+    var imgWrapper = document.createElement('div');
+    imgWrapper.className = 'imgWrapper';
     var restart = document.createElement('i');
     var colored_text = document.createElement('span');
     colored_text.innerHTML="33333";
@@ -144,12 +177,13 @@ $(function () {
     var bkColor = document.createElement('div');
     bkColor.className = 'bkColor';
     shadow_canvas.id = 'shadowCanvas';
+    imgWrapper.appendChild(pic_canvas);
+    imgWrapper.appendChild(tips);
     captcha.appendChild(bkColor);
     bkColor.appendChild(captchaPic);
-    captchaPic.appendChild(pic_canvas);
+    captchaPic.appendChild(imgWrapper);
     captchaPic.appendChild(shadow_canvas);
     captchaPic.appendChild(block_canvas);
-    captchaPic.appendChild(tips);
     var context = pic_canvas.getContext('2d');
     var context3 = shadow_canvas.getContext('2d');
     var context2 = block_canvas.getContext('2d');

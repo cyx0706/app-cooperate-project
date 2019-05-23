@@ -1189,7 +1189,7 @@ def home_api(request):
     if request.method == 'POST':
         user_id = request.POST.get('user_id', 0)
         bar_id = request.POST.get('bar_id', 0)
-        title = request.POST.get('title')
+        title = request.POST.get('title', "无标题")
         content = request.POST.get('content')
         pics = request.FILES.getlist('pic')
         if request.session.get('id', None) != int(user_id):

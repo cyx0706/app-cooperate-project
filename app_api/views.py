@@ -796,9 +796,9 @@ def personal_center_api(request, user_id):
             if birthday and re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
                 user.user_msg.birthday = birthday
             if interests:
+                for x in user.user_msg.interest.all():
+                    user.user_msg.interest.remove(x)
                 for i in interests:
-                    for x in user.user_msg.interest.all():
-                        user.user_msg.interest.remove(x)
                     try:
                         user.user_msg.interest.add(Tags.objects.get(type=i))
                     except Exception as e:

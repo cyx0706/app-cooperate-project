@@ -796,7 +796,6 @@ def personal_center_api(request, user_id):
             if birthday and re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
                 user.user_msg.birthday = birthday
             if interests:
-                user.user_msg.interest.all().delete()
                 for i in interests:
                     if user.user_msg.interest.filter(type=i):
                         continue
@@ -917,7 +916,6 @@ def search_api(request):
 
 
 @login_required
-# @cache_page(2*60)
 def floor_msg_api(request, post_id):
     post_id = int(post_id)
     try:
@@ -932,6 +930,7 @@ def floor_msg_api(request, post_id):
                 return JsonResponse({'status': False, 'msg': "无权限"})
             reply_id = int(request.POST.get('reply_id', 0))
             reply_floor = request.POST.get('reply_floor')
+            print(reply_floor)
             try:
                 reply_floor = int(reply_floor)
             except Exception as e:

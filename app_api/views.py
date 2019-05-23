@@ -797,7 +797,8 @@ def personal_center_api(request, user_id):
                 user.user_msg.birthday = birthday
             if interests:
                 for i in interests:
-                    user.user_msg.interest.all().remove()
+                    for x in user.user_msg.interest.all():
+                        user.user_msg.interest.remove(x)
                     try:
                         user.user_msg.interest.add(Tags.objects.get(type=i))
                     except Exception as e:

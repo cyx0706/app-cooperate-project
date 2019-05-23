@@ -1192,7 +1192,7 @@ def home_api(request):
         title = request.POST.get('title')
         content = request.POST.get('content')
         pics = request.FILES.getlist('pic')
-        if not request.session.get('id', None) != int(user_id):
+        if request.session.get('id', None) != int(user_id):
             return JsonResponse({'status': False, 'msg': "无权限"})
         else:
             if not PostBars.objects.filter(id=bar_id):

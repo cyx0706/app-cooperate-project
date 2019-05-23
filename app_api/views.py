@@ -917,7 +917,7 @@ def search_api(request):
 
 
 @login_required
-@cache_page(2*60)
+# @cache_page(2*60)
 def floor_msg_api(request, post_id):
     post_id = int(post_id)
     try:
@@ -930,7 +930,7 @@ def floor_msg_api(request, post_id):
             user_id = request.POST.get('user_id')
             if not int(request.session.get('id')) == int(user_id):
                 return JsonResponse({'status': False, 'msg': "无权限"})
-            reply_id = int(request.POST.get('reply_id'), 0)
+            reply_id = int(request.POST.get('reply_id', 0))
             reply_floor = request.POST.get('reply_floor')
             try:
                 reply_floor = int(reply_floor)
@@ -945,7 +945,7 @@ def floor_msg_api(request, post_id):
             if reply_floor == 1:
                 user = UserAll.objects.get(id=user_id)
                 PostFloor.objects.create(post=post, user=user, content=content)
-                return JsonResponse({'status': True})
+                return JsonResponse({'status': True, 'msg': "建楼成功"})
 
             if reply_id != 0:
                 floor = PostFloor.objects.filter(post=post, floor_number=reply_floor, id=reply_id)

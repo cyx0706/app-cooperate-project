@@ -88,7 +88,6 @@ class UserAdmin(admin.ModelAdmin):
 class TagsAdmin(admin.ModelAdmin):
 
     list_display = ['type']
-    list_display_links = None
 
     def delete_tag(self, request, queryset):
         for i in queryset:
@@ -281,7 +280,6 @@ class UserFollowAdmin(admin.ModelAdmin):
 @admin.register(SensitiveWord)
 class SensitiveWordAdmin(admin.ModelAdmin):
     list_per_page = 20
-    list_display_links = None
     actions = ['delete_words',]
     list_display = ['word']
 

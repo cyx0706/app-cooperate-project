@@ -788,13 +788,14 @@ def personal_center_api(request, user_id):
                     user.username = username
             if description:
                 user.user_msg.description = description
-            try:
-                gender = int(gender)
-            except Exception as e:
-                print(e)
-                return JsonResponse({'status': False, 'msg': "性别格式错误"})
-            if gender in [0, 1, 2]:
-                user.user_msg.gender = gender
+            if gender:
+                try:
+                    gender = int(gender)
+                except Exception as e:
+                    print(e)
+                    return JsonResponse({'status': False, 'msg': "性别格式错误"})
+                if gender in [0, 1, 2]:
+                    user.user_msg.gender = gender
             if birthday and re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
                 user.user_msg.birthday = birthday
             if interests:

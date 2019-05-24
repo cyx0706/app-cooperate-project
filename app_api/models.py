@@ -270,6 +270,7 @@ class UserPraise(models.Model):
     class Meta:
         verbose_name_plural = "点赞"
         verbose_name = "点赞"
+        ordering = ['-time']
 
     def get_user(self):
         return self.user.user.username
@@ -295,6 +296,7 @@ class UserFollow(models.Model):
     class Meta:
         verbose_name_plural = "用户关注的人"
         verbose_name = verbose_name_plural
+        ordering = ['-time']
 
     def __str__(self):
         return self.user.user.username + "关注:" + self.follower.username
@@ -311,6 +313,7 @@ class UserWatching(models.Model):
     class Meta:
         verbose_name_plural = "用户关注的吧"
         verbose_name = verbose_name_plural
+        ordering = ['-time']
 
     def __str__(self):
         return self.user.user.username + "关注:" + self.bar.name

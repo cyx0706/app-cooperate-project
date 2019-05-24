@@ -1041,7 +1041,7 @@ def floor_msg_api(request, post_id):
                         'person_id': i.user_id,
                         'person_name': i.user.username,
                         'person_avatar': i.user.avatar.url,
-                        'datetime': str(i.create_time),
+                        'datetime': i.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                         'content': i.content,
                         'max_display_number': 2,
                         'comment_number': comments_len,

@@ -767,7 +767,8 @@ def personal_center_api(request, user_id):
                 'concern_number': UserFollow.objects.filter(follower=user, display_status=True).count(),
                 'watched_bar_number': user.user_msg.watching.filter(userwatching__display_status=True).count(),
                 'background_pic': user.user_msg.background_pic.url,
-                'interests': [x.type for x in user.user_msg.interest.all()]
+                'interests': [x.type for x in user.user_msg.interest.all()],
+                'posts': user.post_writer.filter(display_status=True).count()
             })
         # 修改个人信息
         if request.method == 'POST':

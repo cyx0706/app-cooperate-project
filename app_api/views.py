@@ -944,18 +944,16 @@ def floor_msg_api(request, post_id):
             if reply_floor == 1:
                 PostFloor.objects.create(post=post, user=user, content=content)
                 return JsonResponse({'status': True, 'msg': "建楼成功"})
-
-            if reply_id != 0:
-                floor = PostFloor.objects.filter(post=post, floor_number=reply_floor, id=reply_id)
-
-            else:
-                floor = PostFloor.objects.filter(post=post, floor_number=reply_floor)
+            floor = PostFloor.objects.filter(post=post, floor_number=reply_floor)
             if floor:
                 floor = floor[0]
+                if reply_id != 0:
+                    if not FloorComments.objects.filter(id=reply_id):
+                        return JsonResponse({'status': False, 'msg': "评论不存在"})
                 FloorComments(reply=floor, user=user, content=content, replied_comment=reply_id).save()
                 return JsonResponse({'status': True})
             else:
-                return JsonResponse({'status': False, 'msg': "评论不存在"})
+                return JsonResponse({'status': False, 'msg': "楼不存在"})
         if request.method == 'GET':
             floor = request.GET.get('floor')
             # 指定检索楼层

@@ -926,21 +926,22 @@ def floor_msg_api(request, post_id):
             user_id = request.POST.get('user_id')
             if not int(request.session.get('id')) == int(user_id):
                 return JsonResponse({'status': False, 'msg': "无权限"})
-            reply_id = int(request.POST.get('reply_id', 0))
+            reply_id = request.POST.get('reply_id', 0)
             reply_floor = request.POST.get('reply_floor')
             print(reply_floor)
             try:
                 reply_floor = int(reply_floor)
+                reply_id = int(reply_id)
             except Exception as e:
                 info_log.warning(e)
-                return JsonResponse({'status':False, 'msg': "楼层格式错误"})
+                return JsonResponse({'status':False, 'msg': "数据格式错误"})
             # 敏感词过滤
             gfw = DFAFilter()
             gfw.database_parse()
             content = request.POST.get('content')
             content = gfw.filter(content)
+            user = UserAll.objects.get(id=user_id)
             if reply_floor == 1:
-                user = UserAll.objects.get(id=user_id)
                 PostFloor.objects.create(post=post, user=user, content=content)
                 return JsonResponse({'status': True, 'msg': "建楼成功"})
 
@@ -951,7 +952,7 @@ def floor_msg_api(request, post_id):
                 floor = PostFloor.objects.filter(post=post, floor_number=reply_floor)
             if floor:
                 floor = floor[0]
-                FloorComments(reply_id=floor.id, user_id=user_id, content=content, replied_comment=0).save()
+                FloorComments(reply=floor, user=user, content=content, replied_comment=reply_id).save()
                 return JsonResponse({'status': True})
             else:
                 return JsonResponse({'status': False, 'msg': "评论不存在"})

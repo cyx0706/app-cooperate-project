@@ -1254,7 +1254,7 @@ def post_bar_api(request):
                     'post_id': i.id,
                     'post_content': i.content,
                     'post_pic': ["/media/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)],
-                    'comment_number': FloorComments.objects.filter(reply__post_id=i.id, status=True).count(),
+                    'comment_number': PostFloor.objects.filter(post_id=i.id).count() - 1,
                     'praise_number': UserPraise.objects.filter(post_id=i.id, display_status=True).count(),
                     'time': str(i.create_time),
                 })

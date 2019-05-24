@@ -891,7 +891,7 @@ def search_api(request):
                 'post_content': post.content,
                 'bar_name': post.bar.name,
                 'post_photo': photo_url,
-                'comment_number': FloorComments.objects.filter(reply_id=post.id, status=True).count(),
+                'comment_number': PostFloor.objects.filter(post_id=post.id, unfold_status=True).count()-1,
                 'praise_number': UserPraise.objects.filter(post_id=post.id, display_status=True).count(),
             })
         return JsonResponse({

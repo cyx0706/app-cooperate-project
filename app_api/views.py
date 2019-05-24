@@ -419,12 +419,10 @@ def comment_info_api(request, user_id):
     user_id = int(user_id)
     comment_info = []
     user_comment_ids = list(FloorComments.objects.filter(user_id=user_id, status=True).values_list('id', flat=True))
-    replies = FloorComments.objects.filter((Q(replied_comment__in=user_comment_ids)| Q(reply__user_id=user_id))& Q(display_status=True)).select_related('user', 'reply__user_id', 'reply', 'reply__post_id')
+    # 自己评论自己不在消息提醒里
+    replies = FloorComments.objects.filter((Q(replied_comment__in=user_comment_ids)| Q(reply__user_id=user_id))& Q(display_status=True)).exclude(user_id=user_id).select_related('user', 'reply__user_id', 'reply', 'reply__post_id')
     comment_info_number = replies.count()
     for a_reply in replies:
-        # 自己评论自己不在消息提醒里
-        if a_reply.user_id == user_id:
-            continue
         if a_reply.reply.user_id==user_id:
             floor_reply_status = True
             replied_content = a_reply.reply.content

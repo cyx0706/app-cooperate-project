@@ -470,20 +470,22 @@ def delete_comment_api(request, user_id):
 
 @login_required
 def delete_info_api(request, user_id):
+    if not request.method == 'DELETE':
+        return JsonResponse({'status': False})
     user_id = int(user_id)
     type = request.DELETE.get('type')
     if type == 'praise':
         praise_id = request.DELETE.getlist('praise_id')
         for a_id in praise_id:
-            UserPraise.objects.filter(id=a_id, user__user_id=user_id).update(info_status=False)
+            UserPraise.objects.filter(id=a_id).update(info_status=False)
     elif type == 'comment':
         comment_id = request.DELETE.getlist('comment_id')
         for a_id in comment_id:
-            FloorComments.objects.filter(id=a_id, user_id=user_id).update(display_status=False)
+            FloorComments.objects.filter(id=a_id).update(display_status=False)
     elif type == 'floor':
         floor_id = request.DELETE.getlist('floor_id')
         for a_id in floor_id:
-            PostFloor.objects.filter(id=a_id, user_id=user_id).update(display_status=False)
+            PostFloor.objects.filter(id=a_id).update(display_status=False)
     else:
         return JsonResponse({'status': False, 'error_code': 2, 'msg': "类型错误"})
     return JsonResponse({'status': True})
@@ -497,7 +499,7 @@ def praise_info_api(request, user_id):
     post_ids = list(Post.objects.filter(writer_id=user_id).values_list('id', flat=True))
     for post_id in post_ids:
         # 自己点赞自己不会在消息里
-        user_praises = UserPraise.objects.filter(post_id=post_id, display_status=True, info_status=True).exclude(user__user_id=user_id).select_related('post', 'user__user')
+        user_praises = UserPraise.objects.filter(Q(post_id=post_id)& Q(display_status=True)&Q(info_status=True)).exclude(user__user_id=user_id).select_related('post', 'user__user')
         if user_praises:
             for praise in user_praises:
                 praise_number += 1
@@ -751,10 +753,10 @@ def personal_center_api(request, user_id):
                     return JsonResponse({'status': False, 'msg': "无权限"})
                 ids = FloorComments.objects.exclude(replied_comment=0).values_list('id', flat=True)
                 return JsonResponse({
-                    'floor_message': PostFloor.objects.filter(post__writer_id=user_id, read_status=False).only('post__writer_id').exclude(user_id=user_id).count(),
-                    'reply_message': FloorComments.objects.filter(user_id=user_id, id__in=ids, read_status=False).exclude(user_id=user_id).count(),
-                    'praise_message': UserPraise.objects.filter(post__writer_id=user_id, read_status=False).exclude(user__user_id=user_id).only('post__writer_id').count(),
-                    'follower_message': UserFollow.objects.filter(follower_id=user_id, read_status=False).count(),
+                    'floor_message': PostFloor.objects.filter(post__writer_id=user_id, read_status=False, display_status=True).only('post__writer_id').exclude(user_id=user_id).count(),
+                    'reply_message': FloorComments.objects.filter(user_id=user_id, id__in=ids, read_status=False, display_status=True).exclude(user_id=user_id).count(),
+                    'praise_message': UserPraise.objects.filter(post__writer_id=user_id, read_status=False, info_status=True).exclude(user__user_id=user_id).only('post__writer_id').count(),
+                    'follower_message': UserFollow.objects.filter(follower_id=user_id, read_status=False, info_status=True).count(),
                 })
             birthday = user.user_msg.birthday
             if birthday is None:

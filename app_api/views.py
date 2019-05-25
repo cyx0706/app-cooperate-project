@@ -694,9 +694,13 @@ def user_collection_api(request, user_id):
         return JsonResponse({'status': False, 'msg': "不存在"})
     if request.method == 'DELETE':
         post_id = request.DELETE.get('post_id')
-        if not user.collections.filter(id=post_id):
+
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist as e:
+            info_log.info(e)
             return JsonResponse({'status': False, 'msg': "收藏不存在"})
-        temp = user.collections.remove(id=post_id)
+        temp = user.collections.remove(post)
         user.save()
         if int(list(temp)[0]) == 0:
             return JsonResponse({'status': False, 'msg': "收藏不存在"})

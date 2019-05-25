@@ -1173,12 +1173,12 @@ def home_api(request):
         user_id = request.GET.get('user')
         lastId = request.GET.get('lastId', 0)
         if user_id:
-            posts = Post.objects.filter(writer_id=user_id)
+            posts = Post.objects.filter(writer_id=user_id, display_status=True)
         else:
             interests = person.user_msg.interest.all()
             posts1 = Post.objects.filter(bar__feature__in=interests, display_status=True)
             ids = list(UserPraise.objects.annotate(count=Count('post_id')).order_by('-count').values_list('post', flat=True))
-            posts2 = Post.objects.filter(id__in=ids)
+            posts2 = Post.objects.filter(id__in=ids, display_status=True)
             posts = (posts2 | posts1).distinct().order_by('-create_time')
         info_log.info(posts)
         try:

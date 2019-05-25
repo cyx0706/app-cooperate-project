@@ -1152,12 +1152,12 @@ def home_api(request):
             interests = person.user_msg.interest.all()
             posts1 = Post.objects.filter(bar__feature__in=interests, display_status=True)
             if posts1.count() >= 20:
-                posts = posts1[0: 20]
+                posts = posts1.order_by('-create_time')
             else:
                 ids = list(UserPraise.objects.annotate(count=Count('post_id')).order_by('-count').values_list('post',
                                                                                                               flat=True))
                 posts2 = Post.objects.filter(id__in=ids, display_status=True)
-                posts = (posts2 | posts1).distinct().order_by('-create_time')[0: 20]
+                posts = (posts2 | posts1).distinct().order_by('-create_time')
         info_log.info(posts)
         try:
             paginator = PaginatorThroughLast(posts, 7, lastId=lastId)

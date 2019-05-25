@@ -694,7 +694,9 @@ def user_collection_api(request, user_id):
         return JsonResponse({'status': False, 'msg': "不存在"})
     if request.method == 'DELETE':
         post_id = request.DELETE.get('post_id')
-        temp = user.collections.filter(id=post_id).delete()
+        if not user.collections.filter(id=post_id):
+            return JsonResponse({'status': False, 'msg': "收藏不存在"})
+        temp = user.collections.remove(id=post_id)
         user.save()
         if int(list(temp)[0]) == 0:
             return JsonResponse({'status': False, 'msg': "收藏不存在"})
@@ -1137,9 +1139,11 @@ class PicThread(threading.Thread):
         except Exception as e:
             print(e)
 
+
 @login_required
 def home_api(request):
-
+    person_id = request.session.get('id')
+    person = UserAll.objects.get(id=person_id)
     if request.method == 'GET':
         post_msg = []
         user_id = request.GET.get('user')
@@ -1147,8 +1151,6 @@ def home_api(request):
         if user_id:
             posts = Post.objects.filter(writer_id=user_id)
         else:
-            person_id = request.session.get('id')
-            person = UserAll.objects.get(id=person_id)
             interests = person.user_msg.interest.all()
             posts1 = Post.objects.filter(bar__feature__in=interests, display_status=True)
             ids = list(UserPraise.objects.annotate(count=Count('post_id')).order_by('-count').values_list('post', flat=True))
@@ -1181,6 +1183,7 @@ def home_api(request):
                 'writer_id':i.writer_id,
                 'writer_name':i.writer.username,
                 'writer_avatar': i.writer.avatar.url,
+                'praise_status': bool(person.user_msg.praise.filter(id=i.id))
             }
             post_msg.append(info)
         return JsonResponse({

@@ -789,7 +789,7 @@ def personal_center_api(request, user_id):
                 'background_pic': user.user_msg.background_pic.url,
                 'interests': [x.type for x in user.user_msg.interest.all()],
                 'posts': user.post_writer.filter(display_status=True).count(),
-                'follower_status': follow_status,
+                'follow_status': follow_status,
             })
         # 修改个人信息
         if request.method == 'POST':

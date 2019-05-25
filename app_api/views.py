@@ -1115,14 +1115,25 @@ def praise_api(request):
         if user_id != request.session.get('id'):
             return JsonResponse({'status': False, 'msg': "无权限"})
         post_id = request.DELETE.get('post_id')
+        try:
+            post_id = int(post_id)
+        except Exception as e:
+            info_log.warning(e)
+            return JsonResponse({'status': False, 'msg': "格式错误"})
         temp = UserPraise.objects.filter(Q(post_id=post_id)& Q(user__user_id=user_id)).update(display_status=False)
+        print(temp)
         if temp != 0:
             return JsonResponse({'status': True})
         else:
             return JsonResponse({'status': False, 'msg': "不存在"})
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
-        if int(user_id) != request.session.get('id'):
+        try:
+            user_id = int(user_id)
+        except Exception as e:
+            info_log.warning(e)
+            return JsonResponse({'status': False, 'msg': "格式错误"})
+        if user_id != request.session.get('id'):
             return JsonResponse({'status': False, 'msg': "无权限"})
         post_id = request.POST.get('post_id')
         if not Post.objects.filter(id=post_id, display_status=True):
@@ -1130,6 +1141,8 @@ def praise_api(request):
         user_msg_id = UserAll.objects.get(id=user_id).user_msg.id
         UserPraise.objects.update_or_create(post_id=post_id, user_id=user_msg_id, defaults={'display_status': True})
         return JsonResponse({'status': True})
+    else:
+        return JsonResponse({'status':False, 'msg':"请使用delete和post"})
 
 
 class PicThread(threading.Thread):

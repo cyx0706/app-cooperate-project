@@ -699,7 +699,7 @@ def user_collection_api(request, user_id):
         except Post.DoesNotExist as e:
             info_log.info(e)
             return JsonResponse({'status': False, 'msg': "收藏不存在"})
-        temp = user.collections.remove(post)
+        user.collections.remove(post)
         user.save()
         return JsonResponse({'status': True})
     if request.method == 'GET':
@@ -1092,7 +1092,7 @@ def post_msg_api(request, post_id):
             'status': True,
             'user_id': user_id,
             'collection_status': bool(UserAll.objects.get(id=user_id).user_msg.collections.filter(id=post_id)),
-            'praise_status': bool(UserPraise.objects.filter(user__user_id=user_id, display_status=True)),
+            'praise_status': bool(UserPraise.objects.filter(user__user_id=user_id, display_status=True, post_id=post_id)),
             'post_msg': post_msg,
         })
 

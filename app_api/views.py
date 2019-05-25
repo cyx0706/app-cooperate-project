@@ -1202,7 +1202,7 @@ def home_api(request):
                 'writer_id':i.writer_id,
                 'writer_name':i.writer.username,
                 'writer_avatar': i.writer.avatar.url,
-                'praise_status': bool(person.user_msg.praise.filter(id=i.id))
+                'praise_status': bool(UserPraise.objects.filter(display_status=True, user__user=person, post_id=i.id))
             }
             post_msg.append(info)
         return JsonResponse({

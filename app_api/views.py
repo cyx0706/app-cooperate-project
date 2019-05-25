@@ -454,6 +454,11 @@ def comment_info_api(request, user_id):
 def delete_comment_api(request, user_id):
     user_id = int(user_id)
     delete_id = request.DELETE.get('comment_id', 0)
+    try:
+        delete_id = int(delete_id)
+    except Exception as e:
+        info_log.info(e)
+        return JsonResponse({'status': False, 'msg': "id格式错误"})
     comment = FloorComments.objects.filter(id=delete_id)
     if comment:
         comment = comment[0]

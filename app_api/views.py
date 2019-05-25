@@ -710,7 +710,7 @@ def user_collection_api(request, user_id):
                 'post_id': i.id,
                 'post_title': i.title,
                 'post_content': i.content,
-                'post_pics': [x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)]
+                'post_pics': ["/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)]
             })
         return JsonResponse({
             'user_id': user_id,

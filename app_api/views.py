@@ -751,7 +751,7 @@ def personal_center_api(request, user_id):
     try:
         user = UserAll.objects.get(id=user_id)
     except UserAll.DoesNotExist as e:
-        print(e)
+        info_log.warning(e)
         return JsonResponse({'status': False, 'msg': "用户不存在"})
     else:
         if request.method == 'GET':
@@ -766,6 +766,10 @@ def personal_center_api(request, user_id):
                     'praise_message': UserPraise.objects.filter(post__writer_id=user_id, read_status=False, info_status=True).exclude(user__user_id=user_id).only('post__writer_id').count(),
                     'follower_message': UserFollow.objects.filter(follower_id=user_id, read_status=False, info_status=True).count(),
                 })
+            if user_id == logged_id:
+                follow_status = None
+            else:
+                follow_status = bool(UserFollow.objects.filter(user__user_id=logged_id, follower=user))
             birthday = user.user_msg.birthday
             if birthday is None:
                 birthday = None
@@ -784,7 +788,8 @@ def personal_center_api(request, user_id):
                 'watched_bar_number': user.user_msg.watching.filter(userwatching__display_status=True).count(),
                 'background_pic': user.user_msg.background_pic.url,
                 'interests': [x.type for x in user.user_msg.interest.all()],
-                'posts': user.post_writer.filter(display_status=True).count()
+                'posts': user.post_writer.filter(display_status=True).count(),
+                'follower_status': follow_status,
             })
         # 修改个人信息
         if request.method == 'POST':
@@ -1176,9 +1181,9 @@ def home_api(request):
             posts2 = Post.objects.filter(id__in=ids)
             posts = (posts2 | posts1).distinct().order_by('-create_time')
         info_log.info(posts)
-        paginator = PaginatorThroughLast(posts, 7, lastId=lastId)
-        num_page = paginator.total_page()
         try:
+            paginator = PaginatorThroughLast(posts, 7, lastId=lastId)
+            num_page = paginator.total_page()
             limited_posts = paginator.page()
         except IDNotInteger as e:
             info_log.info(e)

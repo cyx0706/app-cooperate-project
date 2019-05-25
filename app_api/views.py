@@ -732,8 +732,11 @@ def user_collection_api(request, user_id):
         return JsonResponse({'status': True})
 
 
-@login_required
+# @login_required
 def personal_center_api(request, user_id):
+    logged_id = request.session.get('id', None)
+    if not logged_id:
+        return JsonResponse({'status': False, 'msg': "未登录"})
     user_id = int(user_id)
     try:
         user = UserAll.objects.get(id=user_id)
@@ -744,6 +747,8 @@ def personal_center_api(request, user_id):
         if request.method == 'GET':
             type = request.GET.get('type')
             if type and type == 'message':
+                if logged_id != user_id:
+                    return JsonResponse({'status': False, 'msg': "无权限"})
                 ids = FloorComments.objects.exclude(replied_comment=0).values_list('id', flat=True)
                 return JsonResponse({
                     'floor_message': PostFloor.objects.filter(post__writer_id=user_id, read_status=False).only('post__writer_id').exclude(user_id=user_id).count(),

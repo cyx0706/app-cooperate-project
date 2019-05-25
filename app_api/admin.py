@@ -21,7 +21,7 @@ class UserExAdmin(admin.ModelAdmin):
     list_per_page = 10
     list_display = ['get_username', 'gender', 'get_user_id']
     filter_horizontal = ('collections', 'interest')
-    readonly_fields = ['user']
+    # readonly_fields = ['user']
 
 
     # def has_add_permission(self, request):

@@ -280,7 +280,7 @@ class UserPraise(models.Model):
         return self.post.title
     get_post.short_description = "帖子名"
 
-
+# 我关注了谁, follower是那个谁
 class UserFollow(models.Model):
     user = models.ForeignKey(UserDetailMsg, on_delete=models.CASCADE)
     follower = models.ForeignKey(UserAll, on_delete=models.CASCADE)

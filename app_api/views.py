@@ -690,11 +690,10 @@ def user_collection_api(request, user_id):
     try:
         user = UserDetailMsg.objects.get(user_id=user_id)
     except Exception as e:
-        print(e)
+        info_log.info(e)
         return JsonResponse({'status': False, 'msg': "不存在"})
     if request.method == 'DELETE':
         post_id = request.DELETE.get('post_id')
-
         try:
             post = Post.objects.get(id=post_id)
         except Post.DoesNotExist as e:
@@ -702,8 +701,6 @@ def user_collection_api(request, user_id):
             return JsonResponse({'status': False, 'msg': "收藏不存在"})
         temp = user.collections.remove(post)
         user.save()
-        if int(list(temp)[0]) == 0:
-            return JsonResponse({'status': False, 'msg': "收藏不存在"})
         return JsonResponse({'status': True})
     if request.method == 'GET':
         collections = []

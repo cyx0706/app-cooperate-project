@@ -83,7 +83,6 @@ class UserAdmin(admin.ModelAdmin):
 
 
 
-
 @admin.register(Tags)
 class TagsAdmin(admin.ModelAdmin):
 
@@ -137,12 +136,15 @@ class PhotoInline(admin.TabularInline):
     max_num = 5
 
 
+
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
 
     list_display = ['id','title', 'create_time', 'get_writer', 'get_bar', 'display_status']
     list_per_page = 10
     inlines = [PhotoInline]
+    search_fields = ['content', 'writer__username']
+
 
 
 class FloorCommentInline(admin.TabularInline):

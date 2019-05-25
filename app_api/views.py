@@ -1032,29 +1032,6 @@ def floor_msg_api(request, post_id):
                     current_page = paginator.page(1)
                     limited_floors = current_page.object_list
                 for i in limited_floors:
-                    comment_msg = []
-                    comments = FloorComments.objects.select_related('user').filter(Q(reply_id=i.id) & Q(status=True))[0:2]
-                    comments_len = comments.count()
-                    if comments:
-                        for comment in comments:
-                            if bool(comment.replied_comment):
-                                temp = FloorComments.objects.get(id=comment.replied_comment)
-                                reply_person_id = temp.user_id
-                                reply_person_name = temp.user.username
-                            else:
-                                reply_person_id = None
-                                reply_person_name = None
-                            comment_msg.append({
-                                'comment_id': comment.id,
-                                'reply_status': bool(comment.replied_comment),
-                                'reply_person_name': reply_person_name,
-                                'reply_person_id': reply_person_id,
-                                'person_id': comment.user_id,
-                                'person_name': comment.user.username,
-                                'person_avatar': comment.user.avatar.url,
-                                'datetime': str(comment.create_time),
-                                'content': comment.content,
-                            })
                     floor_info.append({
                         'floor': i.floor_number,
                         'person_id': i.user_id,
@@ -1062,9 +1039,6 @@ def floor_msg_api(request, post_id):
                         'person_avatar': i.user.avatar.url,
                         'datetime': i.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                         'content': i.content,
-                        'max_display_number': 2,
-                        'comment_number': comments_len,
-                        'comment': comment_msg,
                     })
                 return JsonResponse({
                     'floor_number': post_floor.count(),

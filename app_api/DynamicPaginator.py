@@ -61,7 +61,7 @@ class PaginatorThroughLast():
         self.checklastId()
 
     def count_page(self):
-        self.page_number = int(math.ceil(len(self.queryset_list[0: 20]) / self.per_page))
+        self.page_number = int(math.ceil(len(self.queryset_list) / self.per_page))
 
     def total_page(self):
         return self.page_number

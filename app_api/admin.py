@@ -146,7 +146,7 @@ class PostBarFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         if self.value():
-            return queryset.filter(feature__id=self.value())
+            return queryset.filter(bar_id=self.value())
         else:
             return queryset
 

@@ -78,9 +78,9 @@ class PaginatorThroughLast():
     def page(self):
         num = 0
         for i in self.id_list:
-            num += 1
             if i == self.lastId:
                 break
+            num += 1
         begin = num
         end = begin + self.per_page
         return self.queryset_list[begin: end]

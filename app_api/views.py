@@ -1020,18 +1020,18 @@ def floor_msg_api(request, post_id):
                 floor_info = []
                 page = request.GET.get('page', 1)
                 post_floor = PostFloor.objects.select_related('user').filter(post=post, unfold_status=True).exclude(floor_number=1)
-                paginator = Paginator(post_floor, 5)
-                num_page = paginator.num_pages
-                try:
-                    current_page = paginator.page(page)
-                    limited_floors = current_page.object_list
-                except PageNotAnInteger:
-                    current_page = paginator.page(1)
-                    limited_floors = current_page.object_list
-                except EmptyPage:
-                    current_page = paginator.page(1)
-                    limited_floors = current_page.object_list
-                for i in limited_floors:
+                # paginator = Paginator(post_floor, 5)
+                # num_page = paginator.num_pages
+                # try:
+                #     current_page = paginator.page(page)
+                #     limited_floors = current_page.object_list
+                # except PageNotAnInteger:
+                #     current_page = paginator.page(1)
+                #     limited_floors = current_page.object_list
+                # except EmptyPage:
+                #     current_page = paginator.page(1)
+                #     limited_floors = current_page.object_list
+                for i in post_floor:
                     floor_info.append({
                         'floor': i.floor_number,
                         'person_id': i.user_id,
@@ -1042,10 +1042,10 @@ def floor_msg_api(request, post_id):
                     })
                 return JsonResponse({
                     'floor_number': post_floor.count(),
-                    'total_page': num_page,
-                    'per_page': 5,
-                    'current_page': current_page.number,
-                    'number': len(limited_floors),
+                    'total_page': 1,
+                    'per_page': 100,
+                    'current_page': post_floor.count(),
+                    'number': post_floor.count(),
                     'floor_info': floor_info,
                 })
 

@@ -769,7 +769,7 @@ def personal_center_api(request, user_id):
             if user_id == logged_id:
                 follow_status = None
             else:
-                follow_status = bool(UserFollow.objects.filter(user__user_id=logged_id, follower=user))
+                follow_status = bool(UserFollow.objects.filter(user__user_id=logged_id, follower=user, display_status=True))
             birthday = user.user_msg.birthday
             if birthday is None:
                 birthday = None

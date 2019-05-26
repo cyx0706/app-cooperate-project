@@ -1155,7 +1155,8 @@ def home_api(request):
             if posts1.count() >= 21:
                 posts = posts1.order_by('-create_time')
             else:
-                ids = list(UserPraise.objects.annotate(count=Count('post_id')).order_by('-count').values_list('post', flat=True))
+                ids = list(UserPraise.objects.annotate(count=Count('post')).order_by('-count').values_list('post', flat=True))
+                info_log.info(ids)
                 posts2 = Post.objects.filter(id__in=ids, display_status=True)
                 posts = (posts1 | posts2).distinct()
         info_log.info(posts)

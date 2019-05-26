@@ -1236,6 +1236,8 @@ def home_api(request):
             else:
                 post.display_status = False
                 FloorComments.objects.filter(reply__post_id=post_id).update(display_status=False)
+                post.bar.bar_number -= 1
+                post.bar.save()
                 post.save()
                 return JsonResponse({'status': True})
 

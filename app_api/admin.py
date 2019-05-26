@@ -127,7 +127,7 @@ class PostBarsAdmin(admin.ModelAdmin):
     )
 
     search_fields = ['name', 'master__username']
-    readonly_fields = ['get_pic', 'bar_number']
+    readonly_fields = ['get_pic']
 
 
 class PhotoInline(admin.TabularInline):
@@ -177,6 +177,7 @@ class PostFloorAdmin(admin.ModelAdmin):
     list_filter = (
         (PostListFilter),
     )
+    search_fields = ['post__title']
 
     def get_readonly_fields(self, request, obj=None):
         # 只允许创建时选择帖

@@ -136,6 +136,20 @@ class PhotoInline(admin.TabularInline):
     max_num = 5
 
 
+class PostBarFilter(admin.SimpleListFilter):
+
+    title = "按类型分类"
+    parameter_name = 'type'
+
+    def lookups(self, request, model_admin):
+        return ((t.id, t.type) for t in PostBars.objects.all())
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(feature__id=self.value())
+        else:
+            return queryset
+
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
@@ -144,6 +158,9 @@ class PostAdmin(admin.ModelAdmin):
     list_per_page = 10
     inlines = [PhotoInline]
     search_fields = ['content', 'writer__username']
+    list_filter = (
+        (PostBarFilter),
+    )
 
 
 

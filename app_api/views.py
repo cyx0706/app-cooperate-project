@@ -950,7 +950,6 @@ def floor_msg_api(request, post_id):
                 return JsonResponse({'status': False, 'msg': "无权限"})
             reply_id = request.POST.get('reply_id', 0)
             reply_floor = request.POST.get('reply_floor')
-            print(reply_floor)
             try:
                 reply_floor = int(reply_floor)
                 reply_id = int(reply_id)

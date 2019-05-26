@@ -259,6 +259,7 @@ def email_api(request):
     else:
         return JsonResponse({'status': False, 'msg': "邮箱格式错误"})
 
+
 @info_logged
 def find_pwd_api(request):
 
@@ -282,7 +283,6 @@ def find_pwd_api(request):
             body = "你的验证码是:{}".format(code)
             request.session['code1'] = code
             request.session['temp_id'] = user.id
-            request.session.set_expiry(5*60)
             send_mail(subject=title, message=body, recipient_list=[email], from_email=settings.EMAIL_HOST_USER)
             return JsonResponse({'status': True, 'msg': "发送邮件成功"})
 

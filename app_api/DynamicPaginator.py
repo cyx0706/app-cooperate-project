@@ -82,6 +82,8 @@ class PaginatorThroughLast():
                 break
             num += 1
         begin = num
+        if begin != 0:
+            begin = begin + 1 # 前进一位, 从下一位开始
         end = begin + self.per_page
         return self.queryset_list[begin: end]
         # self.object_queryset = self.object_queryset.filter(id__lt=self.lastId)

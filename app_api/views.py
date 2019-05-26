@@ -763,8 +763,8 @@ def personal_center_api(request, user_id):
                 return JsonResponse({
                     'floor_message': PostFloor.objects.filter(Q(post__writer_id=user_id)& Q(read_status=False) & Q(display_status=True)).only('post__writer_id').exclude(user_id=user_id).count(),
                     'reply_message': FloorComments.objects.filter(Q(user_id=user_id) & Q(id__in=ids)&Q(read_status=False) & Q(display_status=True)).exclude(user_id=user_id).count(),
-                    'praise_message': UserPraise.objects.filter(Q(post__writer_id=user_id) & Q(read_status=False) & Q(info_status=True)).exclude(user__user_id=user_id).only('post__writer_id').count(),
-                    'follower_message': UserFollow.objects.filter(Q(follower_id=user_id) & Q( read_status=False) & Q(info_status=True)).count(),
+                    'praise_message': UserPraise.objects.filter(Q(post__writer_id=user_id) & Q(read_status=False) & Q(info_status=True)& Q(display_status=True)).exclude(user__user_id=user_id).only('post__writer_id').count(),
+                    'follower_message': UserFollow.objects.filter(Q(follower_id=user_id) & Q( read_status=False) & Q(info_status=True)&Q(display_status=True)).count(),
                 })
             if user_id == logged_id:
                 follow_status = None

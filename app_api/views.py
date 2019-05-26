@@ -344,7 +344,7 @@ def register_api(request):
             try:
                 gender = int(gender)
             except Exception as e:
-                print(e)
+                info_log.warning(e)
                 return JsonResponse({'status': False, 'msg': "性别格式错误"})
             if not gender in [0, 1, 2]:
                 return JsonResponse({'status': False, 'msg': "性别格式错误"})
@@ -352,7 +352,7 @@ def register_api(request):
 
             if birthday:
                 if not re.match(r'(\w+){3,4}-(\w+){2}-(\w+){2}', birthday):
-                    return JsonResponse({'status': False, 'msg': "生日格式错误"})
+                    return JsonResponse({'status': False, 'msg': "生日格式错误", 'birthday': birthday})
 
             if UserAll.objects.filter(email=email):
                 return JsonResponse({'status': False, 'msg': "邮箱已经存在", 'error_code': 3})
@@ -361,7 +361,7 @@ def register_api(request):
                 return JsonResponse({'status': False, 'msg': "用户名已存在", 'error_code': 3})
 
             if new_user.create_user(password, email, interest, description, birthday, gender):
-                return JsonResponse({'status': True, 'msg': "创建用户成功"})
+                return JsonResponse({'status': True, 'msg': "创建用户成功", 'birthday': birthday})
             else:
                 return JsonResponse({'status': False, 'error_code': 3, 'msg': "密码不能为空"})
         else:

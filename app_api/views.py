@@ -1099,6 +1099,7 @@ def praise_api(request):
         except Exception as e:
             info_log.warning(e)
             return JsonResponse({'status': False, 'msg': "格式错误"})
+        info_log.info(post_id, user_id)
         temp = UserPraise.objects.filter(Q(post_id=post_id)& Q(user__user_id=user_id)).update(display_status=False)
         if temp != 0:
             return JsonResponse({'status': True})

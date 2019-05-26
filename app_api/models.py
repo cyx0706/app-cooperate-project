@@ -91,6 +91,9 @@ class Post(models.Model):
         # 已经存在
         if Post.objects.filter(id=self.id):
             super(Post, self).save(*args, **kwargs)
+            # 自矫一下
+            # self.bar.bar_number = Post.objects.filter(bar=self.bar, display_status=True).count()
+            # self.bar.save()
         # 生成楼层对应1楼
         else:
             bar = self.bar

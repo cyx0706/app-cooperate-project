@@ -1273,7 +1273,7 @@ def post_bar_api(request):
                 'name': bar.name,
                 'icon': bar.photo.url,
                 'watcher_number': UserWatching.objects.filter(bar_id=bar.id, display_status=True).count(),
-                'post_number': bar.bar_number,
+                'post_number': Post.objects.filter(bar=bar, display_status=True).count(),
                 'description': bar.short_description,
                 'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar_id, display_status=True)),
                 'post_info': post_info,
@@ -1283,11 +1283,12 @@ def post_bar_api(request):
         bar_tag = request.GET.get('bar_tag')
         bars = PostBars.objects.filter(feature__type__contains=bar_tag)
         for bar in bars:
+            info_log.info(bar.bar_number)
             bar_info.append({
                 'bar_id': bar.id,
                 'name': bar.name,
                 'icon': bar.photo.url,
-                'post_number': bar.bar_number,
+                'post_number': Post.objects.filter(bar=bar, display_status=True).count(),
                 'description': bar.short_description,
                 'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar.id, display_status=True)),
                 'watcher_number': UserWatching.objects.filter(bar_id=bar.id, display_status=True).count(),

@@ -162,6 +162,18 @@ class PostAdmin(admin.ModelAdmin):
         (PostBarFilter),
     )
 
+    def save_model(self, request, obj, form, change):
+        if change:
+            status = request.POST.get('display_status')
+            print(status)
+            if status != "on":
+                obj.bar.bar_number -= 1
+                obj.bar.save()
+            else:
+                obj.bar.bar_number += 1
+                obj.bar.save()
+        super(PostAdmin, self).save_model(request, obj, form, change)
+
 
 
 class FloorCommentInline(admin.TabularInline):

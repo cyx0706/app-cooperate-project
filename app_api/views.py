@@ -1235,7 +1235,7 @@ def home_api(request):
                 return JsonResponse({'status': False, 'msg': "无权限"})
             else:
                 post.display_status = False
-                FloorComments.objects.filter(reply__post_id=post_id).update(display_status=False)
+                FloorComments.objects.filter(reply__post_id=post_id).delete()
                 post.bar.bar_number -= 1
                 post.bar.save()
                 post.save()
@@ -1273,7 +1273,7 @@ def post_bar_api(request):
                 'name': bar.name,
                 'icon': bar.photo.url,
                 'watcher_number': UserWatching.objects.filter(bar_id=bar.id, display_status=True).count(),
-                'post_number': Post.objects.filter(bar=bar, display_status=True).count(),
+                'post_number': bar.bar_number,
                 'description': bar.short_description,
                 'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar_id, display_status=True)),
                 'post_info': post_info,
@@ -1288,7 +1288,7 @@ def post_bar_api(request):
                 'bar_id': bar.id,
                 'name': bar.name,
                 'icon': bar.photo.url,
-                'post_number': Post.objects.filter(bar=bar, display_status=True).count(),
+                'post_number': bar.bar_number,
                 'description': bar.short_description,
                 'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar.id, display_status=True)),
                 'watcher_number': UserWatching.objects.filter(bar_id=bar.id, display_status=True).count(),

@@ -1287,7 +1287,8 @@ def post_bar_api(request):
                 'icon': bar.photo.url,
                 'post_number': bar.bar_number,
                 'description': bar.short_description,
-                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar.id, display_status=True))
+                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, bar_id=bar.id, display_status=True)),
+                'watcher_number': UserWatching.objects.filter(bar_id=bar.id, display_status=True).count(),
             })
         return JsonResponse({
             'status': True,

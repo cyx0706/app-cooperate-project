@@ -1145,6 +1145,14 @@ def home_api(request):
         # page = request.GET.get('page', 1)
         if user_id:
             posts = Post.objects.filter(writer_id=user_id, display_status=True)
+            if not posts:
+                return JsonResponse({
+                    'lastId': 0,
+                    'total_page': 0,
+                    'this_page': 0,
+                    'per_page': 7,
+                    'post_msg': [],
+                })
         else:
             interests = person.user_msg.interest.all()
             posts1 = Post.objects.filter(bar__feature__in=interests, display_status=True)

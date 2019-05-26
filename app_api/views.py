@@ -1101,9 +1101,10 @@ def praise_api(request):
             return JsonResponse({'status': False, 'msg': "格式错误"})
         path = os.path.join(settings.BASE_LOG_DIR, 'tmp.txt')
         fp = open(path, 'a+')
-        fp.write("user_id:{}---post_id:{} \n".format(user_id, post_id))
         temp = UserPraise.objects.filter(Q(post_id=post_id)& Q(user__user_id=user_id)).update(display_status=False)
         fp.write(str(temp))
+        fp.write(str(request.body))
+        fp.write(str(request.DELETE))
         fp.close()
         if temp != 0:
             return JsonResponse({'status': True})

@@ -761,10 +761,10 @@ def personal_center_api(request, user_id):
                     return JsonResponse({'status': False, 'msg': "无权限"})
                 ids = FloorComments.objects.exclude(replied_comment=0).values_list('id', flat=True)
                 return JsonResponse({
-                    'floor_message': PostFloor.objects.filter(post__writer_id=user_id, read_status=False, display_status=True).only('post__writer_id').exclude(user_id=user_id).count(),
-                    'reply_message': FloorComments.objects.filter(user_id=user_id, id__in=ids, read_status=False, display_status=True).exclude(user_id=user_id).count(),
-                    'praise_message': UserPraise.objects.filter(post__writer_id=user_id, read_status=False, info_status=True).exclude(user__user_id=user_id).only('post__writer_id').count(),
-                    'follower_message': UserFollow.objects.filter(follower_id=user_id, read_status=False, info_status=True).count(),
+                    'floor_message': PostFloor.objects.filter(Q(post__writer_id=user_id)& Q(read_status=False) & Q(display_status=True)).only('post__writer_id').exclude(user_id=user_id).count(),
+                    'reply_message': FloorComments.objects.filter(Q(user_id=user_id) & Q(id__in=ids)&Q(read_status=False) & Q(display_status=True)).exclude(user_id=user_id).count(),
+                    'praise_message': UserPraise.objects.filter(Q(post__writer_id=user_id) & Q(read_status=False) & Q(info_status=True)).exclude(user__user_id=user_id).only('post__writer_id').count(),
+                    'follower_message': UserFollow.objects.filter(Q(follower_id=user_id) & Q( read_status=False) & Q(info_status=True)).count(),
                 })
             if user_id == logged_id:
                 follow_status = None
@@ -1100,7 +1100,6 @@ def praise_api(request):
             info_log.warning(e)
             return JsonResponse({'status': False, 'msg': "格式错误"})
         temp = UserPraise.objects.filter(Q(post_id=post_id)& Q(user__user_id=user_id)).update(display_status=False)
-        print(temp)
         if temp != 0:
             return JsonResponse({'status': True})
         else:
@@ -1146,18 +1145,18 @@ def home_api(request):
         post_msg = []
         user_id = request.GET.get('user')
         lastId = request.GET.get('lastId', 0)
+        # page = request.GET.get('page', 1)
         if user_id:
             posts = Post.objects.filter(writer_id=user_id, display_status=True)
         else:
             interests = person.user_msg.interest.all()
             posts1 = Post.objects.filter(bar__feature__in=interests, display_status=True)
-            if posts1.count() >= 20:
+            if posts1.count() >= 21:
                 posts = posts1.order_by('-create_time')
             else:
-                ids = list(UserPraise.objects.annotate(count=Count('post_id')).order_by('-count').values_list('post',
-                                                                                                              flat=True))
+                ids = list(UserPraise.objects.annotate(count=Count('post_id')).order_by('-count').values_list('post', flat=True))
                 posts2 = Post.objects.filter(id__in=ids, display_status=True)
-                posts = (posts2 | posts1).distinct().order_by('-create_time')
+                posts = (posts1 | posts2).distinct()
         info_log.info(posts)
         try:
             paginator = PaginatorThroughLast(posts, 7, lastId=lastId)

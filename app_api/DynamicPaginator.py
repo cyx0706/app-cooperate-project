@@ -54,26 +54,35 @@ class PaginatorThroughLast():
 
     def __init__(self, object_queryset, per_page, lastId):
         self.lastId = lastId
-        self.object_queryset = object_queryset
+        self.id_list = list(object_queryset.values_list('id', flat=True))
+        self.queryset_list = object_queryset
         self.per_page = per_page
         self.count_page()
         self.checklastId()
 
     def count_page(self):
-        self.page_number = int(math.ceil(self.object_queryset.count() / self.per_page))
+        self.page_number = int(math.ceil(len(self.queryset_list[0: 20]) / self.per_page))
 
     def total_page(self):
         return self.page_number
 
     def checklastId(self):
         if self.lastId == 0:
-            self.lastId = self.object_queryset.first().id
-        try:
-            self.lastId = int(self.lastId)
-        except (TypeError, ValueError):
-            raise IDNotInteger(_("That ID Must Be Integer"))
+            self.lastId = self.id_list[0]
+        else:
+            try:
+                self.lastId = int(self.lastId)
+            except (TypeError, ValueError):
+                raise IDNotInteger(_("That ID Must Be Integer"))
 
     def page(self):
-        info_log.info(self.lastId)
-        self.object_queryset = self.object_queryset.filter(id__lt=self.lastId)
-        return self.object_queryset[0: self.per_page]
+        num = 0
+        for i in self.id_list:
+            num += 1
+            if i == self.lastId:
+                break
+        begin = num
+        end = begin + self.per_page
+        return self.queryset_list[begin: end]
+        # self.object_queryset = self.object_queryset.filter(id__lt=self.lastId)
+        # return self.object_queryset[0: self.per_page]

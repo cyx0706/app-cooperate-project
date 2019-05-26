@@ -233,7 +233,7 @@ def login_api(request):
     user_obj = user.login(password)
     if user_obj:
         request.session['id'] = user_obj.id
-        request.session.set_expiry(60*60)
+        request.session.set_expiry(60*60*36)
         return JsonResponse({'status': True, 'msg': "登录成功",
                              'avatar': user_obj.avatar.url,
                              'user_id': user_obj.id,

@@ -889,14 +889,14 @@ def search_api(request):
                 'bar_icon': bar.photo.url,
                 'post_number': bar.bar_number,
                 'watching_number': UserWatching.objects.filter(bar_id=bar.id, display_status=True).count(),
-                'watching_status': bool(UserWatching.objects.filter(user__user_id=user_id, display_status=True)),
+                'watching_status': bool(UserWatching.objects.filter(Q(user__user_id=user_id)&Q(display_status=True))),
             })
         return JsonResponse({
             'bar_number': bars.count(),
             'bar_msg': output,
         })
     elif type == 'post':
-        posts = Post.objects.select_related('writer', 'bar').filter(title__icontains=search, display_status=True)
+        posts = Post.objects.select_related('writer', 'bar').filter(content__icontains=search, display_status=True)
         for post in posts:
             pics = PostPhotos.objects.filter(post_id=post.id)
             if pics:

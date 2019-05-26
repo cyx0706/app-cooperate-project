@@ -772,15 +772,15 @@ def personal_center_api(request, user_id):
                 follow_status = bool(UserFollow.objects.filter(user__user_id=logged_id, follower=user, display_status=True))
             birthday = user.user_msg.birthday
             if birthday is None:
-                birthday = None
+                response_birthday = "保密"
             else:
-                birthday = str(birthday)
+                response_birthday = str(birthday)
             return JsonResponse({
                 'user_id': user_id,
                 'username': user.username,
                 'gender': user.user_msg.gender,
                 'description': user.user_msg.description,
-                'birthday': birthday,
+                'birthday': response_birthday,
                 'avatar': user.avatar.url,
                 'follower_number': UserFollow.objects.filter(follower=user, display_status=True).count(),
                 'collection_number': user.user_msg.collections.count(),

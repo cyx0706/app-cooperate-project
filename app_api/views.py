@@ -1099,10 +1099,10 @@ def praise_api(request):
         except Exception as e:
             info_log.warning(e)
             return JsonResponse({'status': False, 'msg': "格式错误"})
-        info_log.info("这里是app端输入")
-        info_log.info(request.body)
-        info_log.info(request.DELETE)
-        info_log.info(post_id, user_id)
+        path = os.path.join(settings.BASE_LOG_DIR, 'tmp.txt')
+        fp = open(path, 'a+')
+        fp.write("user_id:{}---post_id{}".format(user_id, post_id))
+        fp.close()
         temp = UserPraise.objects.filter(Q(post_id=post_id)& Q(user__user_id=user_id)).update(display_status=False)
         if temp != 0:
             return JsonResponse({'status': True})
@@ -1169,7 +1169,7 @@ def home_api(request):
             limited_posts = paginator.page()
         except IDNotInteger as e:
             info_log.info(e)
-            return JsonResponse({'status': False, 'msg': "id不是无法转成整数"})
+            return JsonResponse({'status': False, 'msg': "id无法转成整数"})
         temp = list(limited_posts)
         if temp:
             lastId = temp[-1].id
@@ -1193,7 +1193,6 @@ def home_api(request):
             }
             post_msg.append(info)
         return JsonResponse({
-            'number': len(posts),
             'lastId': lastId,
             'total_page': num_page,
             'this_page': len(limited_posts),

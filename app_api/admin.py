@@ -142,7 +142,7 @@ class PostBarFilter(admin.SimpleListFilter):
     parameter_name = 'type'
 
     def lookups(self, request, model_admin):
-        return ((t.id, t.type) for t in PostBars.objects.all())
+        return ((t.id, t.name) for t in PostBars.objects.all())
 
     def queryset(self, request, queryset):
         if self.value():

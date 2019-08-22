@@ -1070,7 +1070,7 @@ def post_msg_api(request, post_id):
             'content': post.content,
             'bar_id': post.bar_id,
             'bar': post.bar.name,
-            'bar_tags': list(post.bar.feature),
+            'bar_tags': [i.type for i in post.bar.feature.all()],
         }
         return JsonResponse({
             'status': True,
@@ -1266,17 +1266,18 @@ def post_bar_api(request):
             post_info = []
             posts = Post.objects.filter(bar_id=bar_id, display_status=True).select_related('writer')
             for i in posts:
+                post_id = i.id
                 post_info.append({
                     'writer_id': i.writer_id,
                     'writer_avatar': i.writer.avatar.url,
                     'writer_name': i.writer.username,
-                    'post_id': i.id,
+                    'post_id': post_id,
                     'post_content': i.content,
-                    'post_pic': ["/media/"+x for x in PostPhotos.objects.filter(post_id=i.id).values_list('pic', flat=True)],
-                    'comment_number': PostFloor.objects.filter(post_id=i.id, unfold_status=True).count() - 1, # 减去1楼
-                    'praise_number': UserPraise.objects.filter(post_id=i.id, display_status=True).count(),
+                    'post_pic': ["/media/"+x for x in PostPhotos.objects.filter(post_id=post_id).values_list('pic', flat=True)],
+                    'comment_number': PostFloor.objects.filter(post_id=post_id, unfold_status=True).count() - 1, # 减去1楼
+                    'praise_number': UserPraise.objects.filter(post_id=post_id, display_status=True).count(),
                     'time': str(i.create_time),
-                    'praise_status': bool(UserPraise.objects.filter(user__user_id=user_id, display_status=True))
+                    'praise_status': bool(UserPraise.objects.filter(user__user_id=user_id, display_status=True, post_id=post_id))
                 })
             return JsonResponse({
                 'status': True,

@@ -278,6 +278,7 @@ class UserPraiseAdmin(admin.ModelAdmin):
     list_filter = (
         ('display_status', admin.BooleanFieldListFilter),
     )
+    search_fields = ['user__user__username']
 
 @admin.register(UserFollow)
 class UserFollowAdmin(admin.ModelAdmin):

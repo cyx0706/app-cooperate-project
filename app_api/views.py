@@ -1070,7 +1070,7 @@ def post_msg_api(request, post_id):
             'content': post.content,
             'bar_id': post.bar_id,
             'bar': post.bar.name,
-            'bar_tags': [i.type for i in post.bar.feature],
+            'bar_tags': list(post.bar.feature),
         }
         return JsonResponse({
             'status': True,
@@ -1276,7 +1276,7 @@ def post_bar_api(request):
                     'comment_number': PostFloor.objects.filter(post_id=i.id, unfold_status=True).count() - 1, # 减去1楼
                     'praise_number': UserPraise.objects.filter(post_id=i.id, display_status=True).count(),
                     'time': str(i.create_time),
-                    'praise_status': bool(UserPraise.objects.filter(user_id=user_id, display_status=True))
+                    'praise_status': bool(UserPraise.objects.filter(user__user_id=user_id, display_status=True))
                 })
             return JsonResponse({
                 'status': True,

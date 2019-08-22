@@ -73,7 +73,6 @@ DATABASES = {
         'PASSWORD': '0706xxsr',
         'HOST': '127.0.0.1',
         'PORT': '3306',
-        'CHARSET': 'utf8',
     }
 }
 

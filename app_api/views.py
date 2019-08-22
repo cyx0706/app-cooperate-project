@@ -1054,7 +1054,7 @@ def post_msg_api(request, post_id):
     try:
         post = Post.objects.get(id=post_id)
     except Post.DoesNotExist as e:
-        print(e)
+        info_log.warning(e)
         return JsonResponse({'status': False, 'msg': "不存在"})
     else:
         if not post.display_status:
@@ -1070,12 +1070,15 @@ def post_msg_api(request, post_id):
             'content': post.content,
             'bar_id': post.bar_id,
             'bar': post.bar.name,
+            'bar_tags': [i.type for i in post.bar.feature],
         }
         return JsonResponse({
             'status': True,
             'user_id': user_id,
             'collection_status': bool(UserAll.objects.get(id=user_id).user_msg.collections.filter(id=post_id)),
             'praise_status': bool(UserPraise.objects.filter(user__user_id=user_id, display_status=True, post_id=post_id)),
+            'praise_number': UserPraise.objects.filter(post_id=post_id, display_status=True).count(),
+            'floor_number': int(PostFloor.objects.filter(post_id=post_id).count()) - 1,
             'post_msg': post_msg,
         })
 
@@ -1257,7 +1260,7 @@ def post_bar_api(request):
         try:
             bar = PostBars.objects.get(id=bar_id)
         except PostBars.DoesNotExist as e:
-            print(e)
+            info_log.warning(e)
             return JsonResponse({'status': False, 'msg': "id不存在"})
         else:
             post_info = []
@@ -1273,6 +1276,7 @@ def post_bar_api(request):
                     'comment_number': PostFloor.objects.filter(post_id=i.id, unfold_status=True).count() - 1, # 减去1楼
                     'praise_number': UserPraise.objects.filter(post_id=i.id, display_status=True).count(),
                     'time': str(i.create_time),
+                    'praise_status': bool(UserPraise.objects.filter(user_id=user_id, display_status=True))
                 })
             return JsonResponse({
                 'status': True,
